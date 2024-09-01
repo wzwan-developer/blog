@@ -204,7 +204,7 @@ menu:
     social:
         - identifier: mail
           name: wz.wang.work@outlook.com
-            #          url:
+          url: mailto:wz.wang.work@outlook.com
           params:
               icon: mail
 
