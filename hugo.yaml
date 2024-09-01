@@ -46,6 +46,10 @@ params:
     rssFullContent: true
     favicon: /favicon.ico # e.g.: favicon placed in `static/favicon.ico` of your site folder, then set this field to `/favicon.ico` (`/` is necessary)
 
+    busuanzi:
+        enable: true
+
+
     footer:
         since: 2024
         customText:
@@ -65,7 +69,8 @@ params:
     article:
         math: true
         toc: true
-        readingTime: false
+        readingTime: true
+        lastmod: true
         license:
             enabled: true
             default: Licensed under CC BY-NC-SA 4.0
