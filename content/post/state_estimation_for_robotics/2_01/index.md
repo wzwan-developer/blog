@@ -18,7 +18,7 @@ $ HX=b $
 $$\begin{bmatrix}H_{mm}&H_{mr}\\H_{rm}&H_{rr}\end{bmatrix}\begin{bmatrix}X_m\\X_r\end{bmatrix}=\begin{bmatrix}b_m\\b_r\end{bmatrix} $$
 拆解的目的是通过边缘化将$X_m$从状态量里删除掉，但是要保留它的约束。在划窗模式里，这个$X_m$为要边缘化掉的量。
 ###  过程
-对$H$矩阵利用舒尔补 进行三角化，如下所示：
+对$H$矩阵利用[舒尔补]({{< ref "/post/state_estimation_for_robotics/2_02/index.md" >}}) 进行三角化，如下所示：
 $$\begin{bmatrix}I&0\\-H_{rm}H_{mm}^{-1}&I\end{bmatrix}\begin{bmatrix}H_{mm}&H_{mr}\\H_{rm}&H_{rr}\end{bmatrix}\begin{bmatrix}X_m\\X_r\end{bmatrix}=\begin{bmatrix}I&0\\-H_{rm}H_{mm}^{-1}&I\end{bmatrix}\begin{bmatrix}b_m\\b_r\end{bmatrix}$$
 化简可得：
 $$\begin{bmatrix}H_{mm}&H_{mr}\\0&H_{rr}-H_{rm}H_{mm}^{-1}H_{mr}\end{bmatrix}\begin{bmatrix}X_m\\X_r\end{bmatrix}=\begin{bmatrix}b_m\\b_r-H_{rm}H_{mm}^{-1}b_m\end{bmatrix}$$
