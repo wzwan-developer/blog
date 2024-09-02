@@ -1,4 +1,5 @@
-baseurl: wzwannet.cn
+baseurl: https://wzwan-developer.github.io
+domain: wzwannet.cn
 languageCode: en-us
 theme: hugo-theme-stack
 paginate: 3
