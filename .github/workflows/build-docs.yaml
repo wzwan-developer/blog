@@ -25,7 +25,7 @@ jobs:
         run: hugo -D
 
       - name: Create or Update CNAME File
-        run:
+        run: |
           # 检查 CNAME 文件是否存在
           if [ ! -f "./public/CNAME" ]; then
           echo "Creating CNAME file..."
