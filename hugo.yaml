@@ -237,6 +237,18 @@ markup:
         renderer:
             ## Set to true if you have HTML content inside Markdown
             unsafe: true
+        extensions:
+            passthrough:
+                delimiters:
+                    block:
+                        - - \[
+                          - \]
+                        - - $$
+                          - $$
+                    inline:
+                        - - $
+                          - $)
+                enable: true
     tableOfContents:
         endLevel: 4
         ordered: true
@@ -249,3 +261,4 @@ markup:
         lineNos: true
         lineNumbersInTable: true
         tabWidth: 4
+

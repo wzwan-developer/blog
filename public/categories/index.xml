@@ -7,7 +7,15 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>wzwan</copyright>
-        <lastBuildDate>Wed, 09 Sep 2020 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 02 Sep 2024 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>数学理论</title>
+        <link>http://localhost:1313/categories/%E6%95%B0%E5%AD%A6%E7%90%86%E8%AE%BA/</link>
+        <pubDate>Mon, 02 Sep 2024 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/categories/%E6%95%B0%E5%AD%A6%E7%90%86%E8%AE%BA/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>Test</title>
         <link>http://localhost:1313/categories/test/</link>
         <pubDate>Wed, 09 Sep 2020 00:00:00 +0000</pubDate>
