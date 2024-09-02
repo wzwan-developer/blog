@@ -24,6 +24,17 @@ jobs:
       - name: Build Web
         run: hugo -D
 
+      - name: Create or Update CNAME File
+        run:
+          # 检查 CNAME 文件是否存在
+          if [ ! -f "./public/CNAME" ]; then
+          echo "Creating CNAME file..."
+          echo "wzwannet.cn" > ./public/CNAME
+          else
+          echo "Updating CNAME file..."
+          # 你可以在这里根据需要修改 CNAME 文件的内容
+          echo "wzwannet.cn" > ./public/CNAME
+          fi
       - name: Deploy Web
         uses: peaceiris/actions-gh-pages@v4
         with:
