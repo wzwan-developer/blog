@@ -61,7 +61,7 @@ params:
 
     sidebar:
         emoji: 🧐
-        subtitle: 好风凭借力，送我上青云。
+        subtitle: 一切真知都是从直接经验发源的。
         avatar:
             enabled: true
             local: true
@@ -190,7 +190,7 @@ params:
 
     colorScheme:
         # Display toggle
-        toggle: true
+        toggle: false
 
         # Available values: auto, light, dark
         default: auto
@@ -263,3 +263,5 @@ markup:
         lineNumbersInTable: true
         tabWidth: 4
 
+# If your site is in 'https', then make sure your base url isn't written using 'http' otherwise your sitemap would
+# contain http (as opposeed to https) URLs. This would affect Google indexing of your URLs.
