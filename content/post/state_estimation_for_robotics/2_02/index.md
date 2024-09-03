@@ -55,7 +55,7 @@ $$
 ### 通过舒尔补分解多元高斯分布
  假设多元变量$M$服从高斯分布，且由两部分组成：$$ x=\begin{bmatrix}a\\b\end{bmatrix} $$,变量构成的协方差矩阵等于$$\sum=\begin{bmatrix} A & C^{T} \\C&D \end{bmatrix}$$,其中$A=cov(a,a)$,$C=cov(a,b)$,$D=cov(b,b)$。
 则$x$的概率分布为：
-$$P(a,b)=P(a)P(a|b)\propto exp(-\frac{1}{2} \begin{bmatrix}a\\b\end{bmatrix}^{T}\begin{bmatrix}A&C^{T}\\C&D\end{bmatrix}^{-1}\begin{bmatrix}a&b\end{bmatrix})$$。使用上一节内容将矩阵转化为对角矩阵
+$$P(a,b)=P(a)P(b|a)\propto exp(-\frac{1}{2} \begin{bmatrix}a\\b\end{bmatrix}^{T}\begin{bmatrix}A&C^{T}\\C&D\end{bmatrix}^{-1}\begin{bmatrix}a&b\end{bmatrix})$$。使用上一节内容将矩阵转化为对角矩阵
 $$ \begin{align}
 P(a,b) \\ 
 \propto  exp\left (  -\frac{1}{2}\begin{bmatrix}a\\b\end{bmatrix}^{T}\begin{bmatrix}A&C^{T}\\C&D\end{bmatrix}^{-1}\begin{bmatrix}a&b\end{bmatrix}\right) \\
