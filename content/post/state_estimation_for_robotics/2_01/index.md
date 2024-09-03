@@ -44,7 +44,7 @@ $${\frac{\partial J(x)}{\partial x^{T}}}|_x=-H^{T}W^{-1}(z-H\hat{x})=0 \Rightarr
 *注：此时形式以及是接近优化角度的$HX=b$。*
 ###  滤波角度
  由于马尔可夫性，当前时刻仅与前一时刻有关，由此再次参考 3.3.2章节 "通过MAP推导卡尔曼滤波"，
- 假设已经有了k-1时刻的后验估计$ \{ \hat {x}_{k-1} ,\hat{P}_{k-1}\}$,目标是计算$ \{ \hat {x}_{k} ,\hat{P}_{k}\}$，我们使用k-1时刻的后验估计加上k时刻的$v_k$,$y_k$来估计$ \{ \hat {x}_{k} ,\hat{P}_{k}\}$。
+ 假设已经有了k-1时刻的后验估计$$ \{ \hat {x}_{k-1} ,\hat{P}_{k-1}\}$$,目标是计算$$ \{ \hat {x}_{k} ,\hat{P}_{k}\}$$，我们使用k-1时刻的后验估计加上k时刻的$v_k$,$y_k$来估计$$ \{ \hat {x}_{k} ,\hat{P}_{k}\}$$。
  为了推导该过程，定义
  $$ z=\begin{bmatrix}\hat{x}_{k-1}\\v_k\\y_k\end{bmatrix},H=\begin{bmatrix}I&&\\-A_{k-1}&I\\&&C_{k}\end{bmatrix},W=\begin{bmatrix}\hat {P}_{k-1}&&\\&Q_k&\\&&R_k\end{bmatrix}$$
  则模型的解为$$(H_{k}^{T}W_{k}^{-1}H_{k})\hat{x}=H_{k}^{T}W_{k}^{-1}z_k$$，
