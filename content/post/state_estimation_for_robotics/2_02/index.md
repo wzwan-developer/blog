@@ -2,7 +2,7 @@
 title: "舒尔补"
 description: 《机器人学中的状态估计》系列
 date: 2024-09-02T23:51:06+08:00
-image: book.png
+image: gaussian-normal-distribution-graph.png
 slug: 2_02
 hidden: false
 comments: true
