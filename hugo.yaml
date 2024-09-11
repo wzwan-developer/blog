@@ -248,7 +248,9 @@ markup:
                           - $$
                     inline:
                         - - $
-                          - $)
+                          - $ 
+                        # - - [
+                        #   - ]
                 enable: true
     tableOfContents:
         endLevel: 4
