@@ -48,4 +48,4 @@ $$
 ### 高阶矩
 三阶矩称为偏度，四阶矩称为峰度。各有用途但是共同的特点为称量之后才能使用。
 ## 参考链接
-> [1]*[如何理解概率论中的“矩”？](https://matongxue.blog.csdn.net/article/details/109766892)*
+ [1][如何理解概率论中的“矩”？](https://matongxue.blog.csdn.net/article/details/109766892)
