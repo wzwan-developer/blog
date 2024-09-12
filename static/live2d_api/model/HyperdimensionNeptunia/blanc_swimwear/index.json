@@ -1,0 +1,36 @@
+{
+    "version":"Sample 1.0.0",
+    "model": "model.moc",
+    "textures": [
+        "textures.1024/00.png",
+        "textures.1024/01.png",
+        "textures.1024/02.png"
+    ],
+    "pose": "../general/pose.json",
+    "physics": "physics.json",
+    "layout": {
+        "center_x": 0,
+        "center_y": -0.45,
+        "width": 3
+    },
+    "hit_areas_custom":{
+		"head_x":[-0.42, 0.68],
+		"head_y":[-0.13, 0.36],
+		"body_x":[-0.46, 0.16],
+		"body_y":[0, -0.45]
+	},
+	"motions": {
+        "idle": [
+            {"file": "motions/../../general/mtn/idle_00.mtn", "fade_in": 2000, "fade_out": 2000},
+            {"file": "motions/../../general/mtn/idle_01.mtn", "fade_in": 2000, "fade_out": 2000},
+            {"file": "motions/../../general/mtn/idle_02.mtn", "fade_in": 2000, "fade_out": 2000}
+        ],"flick_head": [
+            {"file": "motions/../../nepnep/general/mtn/smile.mtn"},
+            {"file": "motions/../../nepnep/general/mtn/shake.mtn"},
+            {"file": "motions/../../nepnep/general/mtn/refuse.mtn"},
+            {"file": "motions/../../nepnep/general/mtn/tilt_head.mtn"}
+        ],"tap_body": [
+            {"dialogue": 11, "sound": "sounds/../../nepnep/general/snd/001.ogg", "file": "motions/../../nepnep/general/mtn/nep_touch_head_1.mtn"}
+        ]
+	}
+}

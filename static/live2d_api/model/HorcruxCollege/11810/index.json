@@ -1,0 +1,82 @@
+{
+	"type": "Live2D Model Setting",
+	"name": "琉璃婚纱",
+	"model": "Lead_00.moc",
+	"textures": [
+		  "textures/texture_00.png"
+	   ],
+	"layout": {
+	"center_x": 0,
+	"center_y": -0.1
+    },
+    "config":{
+        "scale":1.4,
+        "posX":-140,
+        "posY":150,
+        "offsetX":0,
+        "offsetY":0,
+        "textPosX":325,
+        "textPosY":580,
+        "mirrorX":false
+    },
+	"hit_areas_custom": {
+		"body_x": [
+		  -0.6,
+		  0.6
+		],
+		"body_y": [
+		  0.1,
+		  -0.2
+		]
+	  },
+    "motions":{
+		"idle":[
+			{
+				"file":"motions/idle.mtn"
+			}
+		],
+		"stay":[
+			{
+				"file":"motions/stay_01.mtn"
+			}
+		],
+		"tap_body":[
+			{
+				"file":"motions/setting_01.mtn"
+			},{
+				"file":"motions/touch_01_1.mtn"
+			},{
+				"file":"motions/touch_01_2.mtn"
+			},{
+				"file":"motions/gift_01.mtn"
+			},{
+				"file":"motions/touch_99.mtn"
+			},{				"file":"motions/touch_Bouquet.mtn"
+			}
+		],
+		"touch_Bouquet":[
+			{
+				"file":"motions/touch_Bouquet.mtn",
+				"fade_in":0,
+				"fade_out":0,
+				"say_text":"琉璃在演唱会上看过人山人海的应援粉丝，听过山呼海啸的应援声",
+				"sound":"11810_001",
+				"say_text_show_time":5
+			},
+			{
+				"file":"motions/touch_Bouquet.mtn",
+				"fade_in":0,
+				"fade_out":0,
+				"say_text":"但是，还是最感谢、最喜欢一直陪伴在我身边的你",
+				"sound":"11810_002",
+				"say_text_show_time":5
+			}
+		]
+	},
+	"hit_areas": [
+		{
+      		"name": "touch_Bouquet",
+      		"id": "D_REF_PT_touch_Bouquet"
+    	}
+	]
+}

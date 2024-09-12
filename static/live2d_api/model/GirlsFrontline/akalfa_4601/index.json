@@ -1,0 +1,27 @@
+{
+	"version":"Sample 1.0.0",
+	"model":"model.moc",
+	"textures":[
+		"model.1024/texture_00.png"
+	],
+	"motions":{
+		"flick_head": [
+			{"file":"motions/shake.mtn"}
+		],
+		"tap_body":[
+			{"file":"motions/broken_1.mtn","fade_in":500,"fade_out":0},
+			{"file":"motions/broken_2.mtn","fade_in":500,"fade_out":0},
+			{"file":"motions/broken_3.mtn","fade_in":500,"fade_out":0},
+			{"file":"motions/broken_4.mtn","fade_in":500,"fade_out":0},
+			{"file":"motions/broken_5.mtn","fade_in":500,"fade_out":0}
+		],
+		"idle":[
+			{"file":"motions/daiji_idle_01.mtn","fade_in":500,"fade_out":0},
+			{"file":"motions/login.mtn","fade_in":0,"fade_out":0}
+		]
+	},
+		"hit_areas":[
+			{"name":"head","id":"D_REF.HEAD"},
+			{"name":"body","id":"D_REF.BODY"}
+			]
+}

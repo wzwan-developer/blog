@@ -1,0 +1,50 @@
+{
+	"version":"Sample 1.0.0",
+	"model":"model.moc",
+	"textures":[
+		"model.1024/texture_00.png"
+	],
+	"layout":{
+        "center_x": 0,
+        "center_y": -0.3
+    },
+	"motions":{
+		"idle":[
+			{"file":"motions/idle.mtn"},
+			{"file":"motions/login.mtn"},
+			{"file":"motions/wait_2.mtn"},
+			{"file":"motions/wait_1.mtn"}
+
+		],
+		"flick_head": [
+			{"file":"motions/shake.mtn"}
+		],
+		"tap_body":[
+			{"file":"motions/wedding.mtn"},
+			{"file":"motions/wedding_touch.mtn"},
+			{"file":"motions/touch_1.mtn"},
+			{"file":"motions/touch_2.mtn"},
+			{"file":"motions/touch_3.mtn"},
+			{"file":"motions/touch_4.mtn"},
+			{"file":"motions/touch_5.mtn"}
+		]
+	},
+	"hit_areas_custom": {
+		"head_x": [
+			-0.33,
+			0.7
+		],
+		"head_y": [
+			-0.02,
+			0.42
+		],
+		"body_x": [
+			-0.39,
+			0.27
+		],
+		"body_y": [
+			0.10,
+			-0.35
+		]
+	}
+}
