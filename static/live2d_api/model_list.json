@@ -1,30 +1,25 @@
 {
+  "defaultModelInfo": [
+    0,
+    53,
+    "HonkaiImpact/Kiana"
+  ],
+  "sizeZoomList": [
+    300,
+    400,
+    500,
+    600,
+    700,
+    800,
+    900,
+    1000
+  ],
   "models": [
-    [
-      "GirlsFrontline/hk416_3401",
-      "GirlsFrontline/hk416_3401_destroy",
-      "GirlsFrontline/hk416_805"
-    ],
-    [
-      "GirlsFrontline/kp31_310",
-      "GirlsFrontline/kp31_3101"
-    ],
-    "GirlsFrontline/k2_3301",
-    "GirlsFrontline/generalliu_5101",
-    [
-      "HorcruxCollege/11310",
-      "HorcruxCollege/11110",
-      "HorcruxCollege/11810",
-      "HorcruxCollege/12380"
-    ],
+    "HonkaiImpact/Kiana",
     "HonkaiImpact/Kiana"
   ],
   "messages": [
-    "来自少女前线的 HK416 ~",
-    "来自少女前线的 KP31 ~",
-    "来自少女前线的 k2",
-    "来自少女前线的 generalliu_5101",
-    "魂器学院~ 啦啦啦 ~",
-    "你好哦，这是崩坏学院的 Kiana ~"
+    "你好哦，我是 Kiana ~",
+    "你好哦，我是 Kiana ~"
   ]
 }

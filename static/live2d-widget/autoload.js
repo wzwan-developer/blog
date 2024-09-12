@@ -40,7 +40,8 @@ if (screen.width >= 768) {
 			// cdnPath: "https://cdn.jsdelivr.net/gh/CWHISME/live2d_api@master",
 	        cdnPath: "/live2d_api/",
 			// tools: [ "hitokoto","asteroids", "switch-model", "switch-texture", "photo", "info", "quit"]
-			tools: ["hitokoto","switch-model", "switch-texture", "quit"]
+			// tools: ["hitokoto","switch-model", "switch-texture", "quit"]
+			tools: []
 
 		});
 	});
