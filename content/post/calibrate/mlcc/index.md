@@ -86,7 +86,7 @@ $$\lambda_{min}(M)\le \frac{x^{T}Mx}{x^{T}x}\le\lambda_{max}(M),\forall{x}\ne0$$
 > 已知：$$\mathbf{A}=\frac1N\sum_{i=1}^N\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)^T,\bar{\mathbf{p}}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{p}_{i}$$
 对于一组点$p_{i}\left(i=1,\dots,\right)$和定义的协方差矩阵$A$,假设$A$具有对应于特征向量的$u_{k}\left(k=1,2,3\right)$,则有$$\frac{\partial\lambda_k}{\partial\mathbf{p}_i}=\frac2N(\mathbf{p}_i-\bar{\mathbf{p}})^T\mathbf{u}_k\mathbf{u}_k^T$$其中,$\bar{p}$是$N$个点的均值。
 
-证明如下：假设点$p_i= [x_{i} , y_{i} , z_{i}]^{T}$以及对应的特征向量矩阵$U={[u_{1} , u_{2} , u_{3} ]}^{T}$。进一步定义$p$是$p_{i}$的一个元素，$p$是$x_{i},y_{i},z_{i}$中其中一个。协方差矩阵$A$可以分解为
+**证明如下**：假设点$p_i= [x_{i} , y_{i} , z_{i}]^{T}$以及对应的特征向量矩阵$U={[u_{1} , u_{2} , u_{3} ]}^{T}$。进一步定义$p$是$p_{i}$的一个元素，$p$是$x_{i},y_{i},z_{i}$中其中一个。协方差矩阵$A$可以分解为
 $\Lambda=U^{T}AU$,其中:
 - $\Lambda$是对角矩阵，其对角线元素是特征值,
 $\lambda_{1},\lambda_{2},\lambda_{3}$。
@@ -147,7 +147,68 @@ $$
 
 
 ##### 定理2
+> 已知：$$\mathbf{A}=\frac1N\sum_{i=1}^N\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)^T,\bar{\mathbf{p}}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{p}_{i}$$ 
+对于一组点$p_{i}\left(i=1,\dots,\right)$和定义的协方差矩阵$A$,假设$A$具有对应于特征向量的$u_{k}\left(k=1,2,3\right)$,则有$$\begin{aligned}\frac{\partial^{2}\lambda_{k}}{\partial\mathbf{p}_{j}\partial\mathbf{p}_{i}}=\begin{cases}\frac{2}{N}\biggl(\frac{N-1}{N}\mathbf{u}_{k}\mathbf{u}_{k}^{T}+\mathbf{u}_{k}(\mathbf{p}_{i}-\bar{\mathbf{p}})^{T}\mathbf{U}\mathbf{F}_{k}^{\mathbf{p}_{j}}\\\\+\mathbf{U}\mathbf{F}_{k}^{\mathbf{p}_{j}}\biggl(\mathbf{u}_{k}^{T}(\mathbf{p}_{i}-\bar{\mathbf{p}})\biggr)\biggr),\quad i=j\\\\\frac{2}{N}\biggl(-\frac{1}{N}\mathbf{u}_{k}\mathbf{u}_{k}^{T}+\mathbf{u}_{k}(\mathbf{p}_{i}-\bar{\mathbf{p}})^{T}\mathbf{U}\mathbf{F}_{k}^{\mathbf{p}_{j}}\\\\+\mathbf{U}\mathbf{F}_{k}^{\mathbf{p}_{j}}\biggl(\mathbf{u}_{k}^{T}(\mathbf{p}_{i}-\bar{\mathbf{p}})\biggr)\biggr),\quad i\neq j\end{cases}\end{aligned}$$ $$\mathbf{F}_{k}^{\mathbf{P}_{j}}=\begin{bmatrix}\mathbf{F}_{1,k}^{\mathbf{P}_{j}}\\\mathbf{F}_{2,k}^{\mathbf{P}_{j}}\\\mathbf{F}_{3,k}^{\mathbf{P}_{j}}\end{bmatrix}\in\mathbb{R}^{3\times3},\quad\mathbf{U}=\begin{bmatrix}\mathbf{u}_{1}&\mathbf{u}_{2}&\mathbf{u}_{3}\end{bmatrix}$$ $$\left.\mathbf{F}_{m,n}^{\mathbf{P}_{j}}=\left\{\begin{matrix}\frac{(\mathbf{p}_{j}-\bar{\mathbf{p}})^{T}}{N(\lambda_{n}-\lambda_{m})}(\mathbf{u}_{m}\mathbf{u}_{n}^{T}+\mathbf{u}_{n}\mathbf{u}_{m}^{T}),m\neq n\\\mathbf{0}_{1\times3}&,m=n\end{matrix}\right.\right.$$
 
+**证明如下**：
+已知协方差矩阵可被分解，且设$q$是点$p_{i}$的一个标量$x_{i},y_{i},z_{i}$之一，如下所示：
+$$\mathbf{A}=\mathbf{U}\mathbf{\Lambda}\mathbf{U}^{T} \tag{式1}$$
+首先对其求关于$q$的导数：
+$$\frac{\partial\mathbf{A}}{\partial q}=\frac{\partial}{\partial q}\left(\mathbf{U}\mathbf{\Lambda}\mathbf{U}^{T}\right)\tag{式2}$$
+根据链式法则，右侧可以写为：
+$${\frac{\partial\mathbf{A}}{\partial q}}={\frac{\partial\mathbf{U}}{\partial q}}\mathbf{\Lambda}\mathbf{U}^{T}+\mathbf{U}{\frac{\partial\mathbf{\Lambda}}{\partial q}}\mathbf{U}^{T}+\mathbf{U}\mathbf{\Lambda}{\frac{\partial\mathbf{U}^{T}}{\partial q}} $$
+由于$\frac{\partial{U}^{T}}{\partial{q}}=\left({\frac{\partial\mathbf{U}}{\partial q}}\right)^{T}$,因此式2可以变为
+$$\begin{align}
+\frac{\partial\mathbf{A}}{\partial q}=\frac{\partial\mathbf{U}}{\partial q}\mathbf{\Lambda}\mathbf{U}^T+\mathbf{U}\frac{\partial\mathbf{\Lambda}}{\partial q}\mathbf{U}^T+\mathbf{U}\mathbf{\Lambda}\left(\frac{\partial\mathbf{U}}{\partial q}\right)^T\\
+\Longrightarrow \mathbf{U}^{T}{\frac{\partial\mathbf{A}}{\partial q}}\mathbf{U}=\mathbf{U}^{T}{\frac{\partial\mathbf{U}}{\partial q}}\mathbf{\Lambda}+{\frac{\partial\mathbf{\Lambda}}{\partial q}}+\mathbf{\Lambda}\left({\frac{\partial\mathbf{U}}{\partial q}}\right)^{T}\mathbf{U} 
+\end{align}\tag{式3}$$
+设$C^{q}=U^{T}\frac{\partial\mathbf{U}}{\partial q} $,因为$C^{q}$是反对称矩阵(由定理1的证明可知),所以有以下$C^{q}+{C^{q}}^{T}=0$,即${C^{q}}^{T}=-C^{q}$。代入式3可得：
+$$
+\mathbf{U}^{T}{\frac{\partial\mathbf{A}}{\partial q}}\mathbf{U}=\mathbf{C}^{q}\mathbf{\Lambda}+{\frac{\partial\mathbf{\Lambda}}{\partial q}}-\mathbf{\Lambda}\mathbf{C}^{q}
+\tag{式4}$$
+取$C^{q}$的m行，n列可得：
+$$
+\begin{align}
+\left(\mathbf{U}^T\frac{\partial\mathbf{A}}{\partial q}\mathbf{U}\right)_{m,n}=\left(\frac{\partial\boldsymbol{\Lambda}}{\partial q}\right)_{m,n}-\left(\mathbf{\Lambda}\mathbf{C}^q-\mathbf{C}^q\mathbf{\Lambda}\right)_{m,n}\\
+\Longrightarrow 
+\left(\frac{\partial\boldsymbol{\Lambda}}{\partial q}\right)_{m,n}=\left(\mathbf{U}^T\frac{\partial\mathbf{A}}{\partial q}\mathbf{U}\right)_{m,n}+\left(\mathbf{\Lambda}\mathbf{C}^q-\mathbf{C}^q\mathbf{\Lambda}\right)_{m,n}\\
+\Longrightarrow 
+0=\left(\mathbf{U}^T\frac{\partial\mathbf{A}}{\partial q}\mathbf{U}\right)_{m,n}+\left(\mathbf{\Lambda}\mathbf{C}^q-\mathbf{C}^q\mathbf{\Lambda}\right)_{m,n}\\
+\Longrightarrow 
+0=u_{m}^{T}{\frac{\partial{A}}{\partial{q}}}u_{n}+\lambda_{m}C_{m,n}^{q}-C_{m,n}^{q}\lambda_{n}\\
+\Longrightarrow 
+C_{m,n}^{q}\left(\lambda_{m}-\lambda_{n}\right)=-u_{m}^{T}{\frac{\partial{A}}{\partial{q}}}u_{n}\\
+\Longrightarrow 
+\mathbf{C}_{m,n}^q=\frac{\mathbf{u}_m^T\frac{\partial\mathbf{A}}{\partial q}\mathbf{u}_n}{\lambda_n-\lambda_m}&,(\lambda_{m}\ne\lambda_{n})
+\end{align}
+\tag{式5}$$
+取$C^{q}$的m行，m列,由于它是反对称矩阵，所以它的对角线元素为0，即：
+$$\begin{align}
+\mathbf{C}_{m,m}^q=\mathbf{u}_m^T\frac{\partial\mathbf{u}_m}{\partial q}\\
+\Longrightarrow 
+{C}_{m,m}^q=0&,(m=n)
+\end{align}\tag{式6}$$
+接下来求解$u_{k}$对p_{j}的三个分量的微积分：
+$$
+\begin{align}
+\frac{\partial u_{k}}{\partial{q}}=\frac{\partial Ue_{k}}{\partial q}
+=UU^{T}\frac{\partial U}{\partial q}e_{k}
+=UC^{q}e_{k}
+\end{align}
+\tag{式7}
+$$
+将$q$替换为$p_{j}$,可得：
+$$
+\begin{align}
+\begin{aligned}
+\frac{\partial\mathbf{u}_k}{\partial\mathbf{p}_j}& =\begin{bmatrix}\frac{\partial\mathbf{U}\mathbf{e}_k}{\partial x_j}&\frac{\partial\mathbf{U}\mathbf{e}_k}{\partial y_j}&\frac{\partial\mathbf{U}\mathbf{e}_k}{\partial z_j}\end{bmatrix} \\
+&=\begin{bmatrix}\mathbf{U}\mathbf{C}^{x_j}\mathbf{e}_k&\mathbf{U}\mathbf{C}^{y_j}\mathbf{e}_k&\mathbf{U}\mathbf{C}^{z_j}\mathbf{e}_k\end{bmatrix} \\
+&=\mathbf{U}\big[\mathbf{C}^{x_j}\mathbf{e}_k\quad\mathbf{C}^{y_j}\mathbf{e}_k\quad\mathbf{C}^{z_j}\mathbf{e}_k\big] \\
+&=\mathbf{U}\begin{bmatrix}\mathbf{C}_{1,k}^{x_j}&\mathbf{C}_{1,k}^{y_j}&\mathbf{C}_{1,k}^{z_j}\\\mathbf{C}_{2,k}^{x_j}&\mathbf{C}_{2,k}^{y_j}&\mathbf{C}_{2,k}^{z_j}\\\mathbf{C}_{3,k}^{x_j}&\mathbf{C}_{3,k}^{y_j}&\mathbf{C}_{3,k}^{z_j}\end{bmatrix}
+\end{aligned}
+\end{align}
+\tag{式8}
+$$
 #### 推导二：该论文中的推导思路
 <span style="color:red;">后续补充！</span>
 > 定理1：
