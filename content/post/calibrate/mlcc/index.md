@@ -143,7 +143,11 @@ $$
 =\frac2N{{\left(p_i-\bar{p}\right)^{T}u_{k}}{u_{k}}^{T}}
 \end{align}\tag{式9}
 $$
-
+其中涉及到以下公式：
+$$
+\frac{\partial\mathbf{p}_j}{\partial\mathbf{p}_i}=\mathbf{I},(i=j)\quad\frac{\partial\mathbf{p}_j}{\partial\mathbf{p}_i}=\mathbf{0},(i\neq j)
+\tag{式10}
+$$
 
 ##### 定理2
 > 已知：$$\mathbf{A}=\frac1N\sum_{i=1}^N\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)^T,\bar{\mathbf{p}}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{p}_{i}$$ 
@@ -284,6 +288,13 @@ $$
 =\frac{\left(p_{j}-\bar{p}\right)^{T}}{\left(\lambda_n -\lambda_m\right)N}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)
 \end{align*}
 \tag{式12}$$
+其中涉及到以下公式：
+$$
+\frac{\partial\mathbf{p}_j}{\partial\mathbf{p}_i}=\mathbf{I},(i=j)\quad\frac{\partial\mathbf{p}_j}{\partial\mathbf{p}_i}=\mathbf{0},(i\neq j)
+\tag{式13}$$
+$$
+\frac{\partial \mathbf{a}^\top\mathbf{x}\mathbf{x}^\top\mathbf{b}}{\partial \mathbf{x}}=\mathbf{x}^\top\left(\mathbf{a}\mathbf{b}^\top+\mathbf{b}\mathbf{a}^\top\right)
+\tag{式14}$$
 结合$m=n$的情况，$\mathbf{F}_{m,n}^{\mathbf{p}_{j}}$的简化结果如下所示：
 $$
 F_{m,n}^{p_{j}}=
@@ -291,7 +302,7 @@ F_{m,n}^{p_{j}}=
  \frac{\left(p_{j}-\bar{p}\right)^{T}}{\left(\lambda_n -\lambda_m\right)N}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right),\quad m\ne n\\
 0,\quad m=n
 \end{cases}
-\tag{式13}$$
+\tag{式15}$$
 #### 推导二：该论文中的推导思路
 <span style="color:red;">后续补充！</span>
 > 定理1：
