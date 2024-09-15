@@ -446,10 +446,19 @@ $$
 
 并且
 $$\begin{align*}
-\text{D} =\begin{bmatrix}\vdots&\vdots\\\cdots {D}_{k,p}^{\mathcal{S}}&\cdots {D}_{k,q}^{\varepsilon_{L}}&\cdots\\\vdots&\vdots\end{bmatrix}\in\mathbb{R}^{3N_{l}\times6(m+n-2)} \\
-\mathrm{D}_{k,p}^{\mathcal{S}} \left.=\left\{\begin{array}{cc}{\left[-{}_{L_{0}}^{G}{R}_{t_{j}}\left({}_{L_{i}}^{L_{0}}{R}{p}_{k}+{}_{L_{i}}^{L_{0}}{t}\right)^{\wedge}{I}\right],}&{\mathrm{if} p=j}\\{{0}_{3\times6},}&{\mathrm{else}}\\\end{array}\right.\right. \\
-\mathrm{D}_{k,q}^{\mathcal{E}_{L}} \left.=\left\{\begin{array}{cc}{\left[-{}_{L_{0}}^{G}{R}_{t_{j}}{}_{L_{i}}^{L_{0}}{R}({p}_{k})^{\wedge}{}_{L_{0}}^{G}{R}_{t_{j}}\right],}&{\mathrm{if~}q=i}\\{{0}_{3\times6},}&{\mathrm{else.}}\\\end{array}\right.\right. 
-\end{align*}$$
+D =\begin{bmatrix}\vdots&\vdots\\\cdots {D}_{k,p}^{\mathcal{S}}&\cdots {D}_{k,q}^{\varepsilon_{L}}&\cdots\\\vdots&\vdots\end{bmatrix}\in\mathbb{R}^{3N_{l}\times6(m+n-2)} \\
+\mathrm{D}_{k,p}^{\mathcal{S}}
+\begin{cases}
+\begin{bmatrix}{-{}_{L_{0}}^{G}{R}_{t_{j}}}\left({}_{L_{i}}^{L_{0}}{R}{p}_{k}+{}_{L_{i}}^{L_{0}}{t}\right)^{\wedge}&{I}\end{bmatrix},\quad{\mathrm{if} p=j}\\
+{0}_{3\times6},\quad {else}
+\end{cases}\\
+\mathrm{D}_{k,q}^{\mathcal{E}_{L}} 
+\begin{cases}
+\begin{bmatrix}{-{}_{L_{0}}^{G}{R}_{t_{j}}}{}_{L_{i}}^{L_{0}}{R}({p}_{k})^{\wedge}&{}_{L_{0}}^{G}{R}_{t_{j}}\end{bmatrix},\quad{\mathrm{if~}q=i}\\
+{0}_{3\times6},\quad {else}
+\end{cases}
+\end{align*}
+$$
 *<span style="color:red">注意：</span>* 论文中的结果与推导有差异，下面是论文给的结果，<span style="color:blue;">待排查！</span>
 $$\delta^{G}{p}_{k}\approx{}_{L_{0}}^{G}R_{t_{j}}
 \big({}_{L_{i}}^{L_{0}}{R}{p}_{k}+{}_{L_{i}}^{L_{0}}{t}\big)^{\wedge}{}_{L_{0}}^{G}\phi_{t_{j}}
