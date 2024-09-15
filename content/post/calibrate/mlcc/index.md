@@ -303,6 +303,34 @@ F_{m,n}^{p_{j}}=
 0,\quad m=n
 \end{cases}
 \tag{式15}$$
+此时，开始求解二阶导数：
+$$
+\begin{align*}
+\frac{\partial}{\partial{p_{j}}}\left(\frac{\partial{\lambda_k}}{\partial{p_{i}}}\right)
+=\frac{\partial{\frac2N\left({{\left(p_i-\bar{p}\right)^{T}u_{k}}{u_{k}}^{T}}\right)^{T}}}{\partial{p_{j}}}\\
+=\frac{2}{N}\cdot\frac{\partial{u_{k}{u_{k}}^{T}\left(p_i-\bar{p}\right)}}{\partial{p_{j}}}\\
+=\frac{2}{N}\cdot\left({\frac{\partial {u_{k}}}{\partial{p_j}}u_{k}^{T}\left(p_i-\bar{p}\right)}+u_{k}\frac{\partial{u_{k}^{T}\left(p_i-\bar{p}\right)}}{p_j}\right)\\
+=\frac{2}{N}\cdot\left(\frac{\partial {u_{k}}}{\partial{p_j}}u_{k}^{T}\left(p_i-\bar{p}\right)
++u_{k}u_{k}^{T}\frac{\partial{\left(p_i-\bar{p}\right)}}{p_j}
++u_{k}\left(p_i-\bar{p}\right)^{T}\frac{\partial{u_k}}{p_j}\right)\\
+=\frac{2}{N}\cdot\left(UF_{k}^{p_j}u_{k}^{T}\left(p_i-\bar{p}\right)
++u_{k}u_{k}^{T}\frac{\partial{\left(p_i-\bar{p}\right)}}{p_j}
++u_{k}\left(p_i-\bar{p}\right)^{T}UF_{k}^{p_j}
+\right)\\
+=\begin{cases}
+\frac{2}{N}\cdot\left(UF_{k}^{p_j}u_{k}^{T}\left(p_i-\bar{p}\right)
++u_{k}u_{k}^{T}\frac{N-1}{N}I
++u_{k}\left(p_i-\bar{p}\right)^{T}UF_{k}^{p_j}
+\right),\quad i=j\\
+\frac{2}{N}\cdot\left(UF_{k}^{p_j}u_{k}^{T}\left(p_i-\bar{p}\right)
++u_{k}u_{k}^{T}\frac{-1}{N}I
++u_{k}\left(p_i-\bar{p}\right)^{T}UF_{k}^{p_j}
+\right),\quad i \ne j
+\end{cases}
+\end{align*}
+\tag{式16}
+$$
+其中同样涉及到式13。
 #### 推导二：该论文中的推导思路
 <span style="color:red;">后续补充！</span>
 > 定理1：
