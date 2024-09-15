@@ -41,42 +41,42 @@ $$\arg\min_{{\mathcal{S},\mathcal{E}_{L},\mathbf{n}_{l},\mathbf{q}_{l}}}\sum_{l}
 观察上式可知，由于对于平面参数$\pi=(n_{l},q_{l})$的依赖，原始误差函数优化的维度很高。因为平面参数$(n_{l},q_{l})$对于不同的平面是有区别的。我们可以对它们进行优化，如下式所示：
 $$\arg\min_{{\mathcal{S},\mathcal{E}_{L}}}\sum_{l}{\left(\min_{n_{l},q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( n_{l}^{T}\left( {^{G}p_{k}-q_{l}}\right)\right)^{2}}} \right)} $$
 在$(n_{l},q_{l})$两个平面参数优化过程中可以优先优化$q_{l}$，再优化$n_{l}$，下式为优化$q_{l}$。
-$$\begin{align}\arg\min_{n_{l},q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( n_{l}^{T}\left( {^{G}p_{k}-q_{l}}\right)\right)^{2}}} \\
+$$\begin{align*}\arg\min_{n_{l},q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( n_{l}^{T}\left( {^{G}p_{k}-q_{l}}\right)\right)^{2}}} \\
 = \arg\min_{n_{l}}\left( \min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( n_{l}^{T}\left( {^{G}p_{k}-q_{l}}\right)\right)^{2}}}\right)\\
 =\arg\min_{n_{l}}n_{l}^{T}\left( \min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)^{2}}}\right)n_{l}
- \end{align}$$
+ \end{align*}$$
  继续简化关于$q_{l}$参数的优化
- $$\begin{align}\arg\min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)^{2}}}\\
- =\min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)\left( {^{G}p_{k}-q_{l}}\right)^{T}}}\end{align}$$
+ $$\begin{align*}\arg\min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)^{2}}}\\
+ =\min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)\left( {^{G}p_{k}-q_{l}}\right)^{T}}}\end{align*}$$
  需要求当上式最小化是$q_{l}$的最优解，我们需要找到上式梯度为0的$q_{l}$的值，因此我们对上式求关于$q_{l}$的导数，如下所示：
-$$\begin{align}\frac{\partial}{\partial{q_{l}}} \left( {\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)\left( {^{G}p_{k}-q_{l}}\right)^{T}}}\right) \\
+$$\begin{align*}\frac{\partial}{\partial{q_{l}}} \left( {\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)\left( {^{G}p_{k}-q_{l}}\right)^{T}}}\right) \\
 ={\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}}  {-({^{G}p_{k}-q_{l})}^{T}}-\left( {^{G}p_{k}-q_{l}}\right)}}\\
 = {\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}}  {-2({^{G}p_{k}-q_{l})}}}}\\
 =-{\frac{2}{N_{l}}{\sum_{k=1}^{N_{l}}  {({^{G}p_{k}-q_{l})}}}}
-\end{align}$$
+\end{align*}$$
 令上式等于0：
-$$\begin{align}-{\frac{2}{N_{l}}{\sum_{k=1}^{N_{l}}  {({^{G}p_{k}}-q_{l})}}}=0 \\
+$$\begin{align*}-{\frac{2}{N_{l}}{\sum_{k=1}^{N_{l}}  {({^{G}p_{k}}-q_{l})}}}=0 \\
  \sum_{k=1}^{N_{l}}{({^{G}p_{k}-q_{l}})} =0\\
  \sum_{k=1}^{N_{l}}{^{G}p_{k}}-N_{l}q_{l}=0\\
  N_{l}q_{l}=\sum_{k=1}^{N_{l}}{^{G}p_{k}}\\
  q_{l}=\frac{1}{N_{l}}\sum_{k=1}^{N_{l}}{^{G}p_{k}}
- \end{align}$$
+ \end{align*}$$
 由此可知，最优的$q_{l}$是所有$^{G}p_{k}$的均值$q_{l}^{\ast}$,接下来继续简化$n_{l}$
-$$\begin{align}\arg\min_{n_{l}}n_{l}^{T}\left( \min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)^{2}}}\right)n_{l}\\
-=\arg\min_{n_{l}}n_{l}^{T}\left( {\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}^{\ast}}\right)^{2}}}\right)n_{l}\end{align}$$
+$$\begin{align*}\arg\min_{n_{l}}n_{l}^{T}\left( \min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)^{2}}}\right)n_{l}\\
+=\arg\min_{n_{l}}n_{l}^{T}\left( {\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}^{\ast}}\right)^{2}}}\right)n_{l}\end{align*}$$
 其中，$${\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}^{\ast}}\right)^{2}}}\\
 \Leftrightarrow \frac{1}{N_{l}}\sum_{k=1}^{N_{l}}{_{}^{G}p_{k} \cdot_{}^{G}p_{k}^{T}-q_{l}^{\ast}\cdot {q_{l}^{\ast}}^{T}} $$
 需要注意的是上式中$q_{l}^{\ast} \cdot_{}^{G}p_{k}^{T}$与$_{}^{G}p_{k}\cdot{q_{l}^{\ast}}^{T}$两个交叉项在最小化过程中不会对优化结果产生影响，所以两式等价。
 所以，带入$$ A_{l}=\frac{1}{N_{l}}\sum_{k=1}^{N_{l}}{_{}^{G}p_{k} \cdot_{}^{G}p_{k}^{T}-q_{l}^{\ast}\cdot {q_{l}^{\ast}}^{T}},q_{l}^{\ast} =\frac{1}{N_{l}}\sum_{k=1}^{N_{l}}{_{}^{G}p_{k}}$$
-$$\begin{align}\arg\min_{n_{l}}n_{l}^{T}\left( {\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}^{\ast}}\right)^{2}}}\right)n_{l}\\
-=\arg\min_{n_{l}}n_{l}^{T}A_{l}n_{l}\end{align}$$
+$$\begin{align*}\arg\min_{n_{l}}n_{l}^{T}\left( {\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}^{\ast}}\right)^{2}}}\right)n_{l}\\
+=\arg\min_{n_{l}}n_{l}^{T}A_{l}n_{l}\end{align*}$$
 根据瑞利商定理，对矩阵$M$满足如下性质：
 $$\lambda_{min}(M)\le \frac{x^{T}Mx}{x^{T}x}\le\lambda_{max}(M),\forall{x}\ne0$$
-则关于误差函数，取得最小化，变量$(n_{l}, q_{l}$的优化为公式$$\begin{align}\arg\min_{n_{l}}n_{l}^{T}\left( \min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)^{2}}}\right)n_{l}\\
-=\lambda_{min}(A_{l})\\
-=\lambda_{3}(A_{l})\end{align}$$
-将其带入$$\begin{align}\arg\min_{{\mathcal{S},\mathcal{E}_{L}}}\sum_{l}{\left(\min_{n_{l},q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( n_{l}^{T}\left( {^{G}p_{k}-q_{l}}\right)\right)^{2}}} \right)}\\
-=\arg\min_{{\mathcal{S},\mathcal{E}_{L}}}\sum_{l}{\lambda_{3}(A_{l})}\end{align}$$
+则关于误差函数，取得最小化，变量$(n_{l}, q_{l})$的优化为公式$$\begin{align*}\
+=\lambda_{min}(A_{l})\\arg\min_{n_{l}}n_{l}^{T}\left( \min_{q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( {^{G}p_{k}-q_{l}}\right)^{2}}}\right)n_{l}\\
+=\lambda_{3}(A_{l})\end{align*}$$
+将其带入$$\begin{align*}\arg\min_{{\mathcal{S},\mathcal{E}_{L}}}\sum_{l}{\left(\min_{n_{l},q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( n_{l}^{T}\left( {^{G}p_{k}-q_{l}}\right)\right)^{2}}} \right)}\\
+=\arg\min_{{\mathcal{S},\mathcal{E}_{L}}}\sum_{l}{\lambda_{3}(A_{l})}\end{align*}$$
 #### 推导二：该论文中的推导思路
 <span style="color:red;">后续补充！</span>
 ### 二阶闭式导数的推导
@@ -86,7 +86,7 @@ $$\lambda_{min}(M)\le \frac{x^{T}Mx}{x^{T}x}\le\lambda_{max}(M),\forall{x}\ne0$$
 > 已知：$$\mathbf{A}=\frac1N\sum_{i=1}^N\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)^T,\bar{\mathbf{p}}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{p}_{i}$$
 对于一组点$p_{i}\left(i=1,\dots,\right)$和定义的协方差矩阵$A$,假设$A$具有对应于特征向量的$u_{k}\left(k=1,2,3\right)$,则有$$\frac{\partial\lambda_k}{\partial\mathbf{p}_i}=\frac2N(\mathbf{p}_i-\bar{\mathbf{p}})^T\mathbf{u}_k\mathbf{u}_k^T$$其中,$\bar{p}$是$N$个点的均值。
 
-**证明如下**：假设点$p_i= [x_{i} , y_{i} , z_{i}]^{T}$以及对应的特征向量矩阵$U={[u_{1} , u_{2} , u_{3} ]}^{T}$。进一步定义$p$是$p_{i}$的一个元素，$p$是$x_{i},y_{i},z_{i}$中其中一个。协方差矩阵$A$可以分解为
+**证明如下**：假设点$p_i= [x_{i} \quad y_{i} \quad z_{i}]^{T}$以及对应的特征向量矩阵$U={[u_{1} \quad u_{2} \quad u_{3} ]}^{T}$。进一步定义$p$是$p_{i}$的一个元素，$p$是$x_{i},y_{i},z_{i}$中其中一个。协方差矩阵$A$可以分解为
 $\Lambda=U^{T}AU$,其中:
 - $\Lambda$是对角矩阵，其对角线元素是特征值,
 $\lambda_{1},\lambda_{2},\lambda_{3}$。
@@ -135,7 +135,6 @@ $$
 =\frac1N\sum_{j=1}^N{\frac{\partial\left(\left({u_{k}}^{T}\left(p_j-\bar{p}\right)\right)^{T}\left({u_{k}}^{T}\left(p_j-\bar{p}\right)\right)\right)}{\partial{p_{i}}}}\\
 =\frac1N\sum_{j=1}^N{2{\left(p_j-\bar{p}\right)^{T}u_{k}}\frac{\partial{u_{k}}^{T}\left(p_j-\bar{p}\right)}{\partial{p_{i}}}}\\
 =\frac2N\sum_{j=1}^N{{\left(p_j-\bar{p}\right)^{T}u_{k}}\frac{\partial{u_{k}}^{T}\left(p_j-\bar{p}\right)}{\partial{p_{i}}}}\\
-=\frac2N\sum_{j=1}^N{{\left(p_j-\bar{p}\right)^{T}u_{k}}\frac{\partial{u_{k}}^{T}\left(p_j-\left(\frac{1}{N}\sum_{i=1}^{N}p_{i}\right)\right)}{\partial{p_{i}}}}\\
 =\frac2N\sum_{j=1}^N{{\left(p_j-\bar{p}\right)^{T}u_{k}}\frac{\partial{u_{k}}^{T}\left(p_j-\left(\frac{1}{N}\sum_{i=1}^{N}p_{i}\right)\right)}{\partial{p_{i}}}}\\
 =\frac2N{{\left(p_i-\bar{p}\right)^{T}u_{k}}{u_{k}}^{T}\left(I-\frac{1}{N}I\right)}+\\\frac2N\sum_{j=1,j\ne{i}}^N\left(p_j-\bar{p}\right)^{T}u_{k}{u_{k}}^{T}\left(-\frac{1}{N}I\right)\\
 =\frac2N{{\left(p_i-\bar{p}\right)^{T}u_{k}}{u_{k}}^{T}\left(I-\frac{1}{N}I\right)}+\\\frac2Nu_{k}{u_{k}}^{T}\left(-\frac{1}{N}I\right)\sum_{j=1,j\ne{i}}^N\left(p_j-\bar{p}\right)^{T}\\
@@ -188,7 +187,7 @@ $$\begin{align}
 \Longrightarrow 
 {C}_{m,m}^q=0&,(m=n)
 \end{align}\tag{式6}$$
-接下来求解$u_{k}$对p_{j}的三个分量的微积分：
+接下来求解$u_{k}$对$p_{j}$的三个分量的微积分：
 $$
 \begin{align}
 \frac{\partial u_{k}}{\partial{q}}=\frac{\partial Ue_{k}}{\partial q}
@@ -197,7 +196,15 @@ $$
 \end{align}
 \tag{式7}
 $$
-将$q$替换为$p_{j}$,可得：
+其中$e_{k}$是3x1的向量，其中第k个元素是1，其它元素是0，这意味着：
+$$
+C^{q}e_{k}=\begin{bmatrix}
+ C_{1,k}^{q}\\
+ C_{2,k}^{q}\\
+C_{3,k}^{q}
+\end{bmatrix}
+\tag{式8}$$
+将$q$替换为$p_{j}$,并将式8代入可得：
 $$
 \begin{align}
 \begin{aligned}
@@ -207,8 +214,84 @@ $$
 &=\mathbf{U}\begin{bmatrix}\mathbf{C}_{1,k}^{x_j}&\mathbf{C}_{1,k}^{y_j}&\mathbf{C}_{1,k}^{z_j}\\\mathbf{C}_{2,k}^{x_j}&\mathbf{C}_{2,k}^{y_j}&\mathbf{C}_{2,k}^{z_j}\\\mathbf{C}_{3,k}^{x_j}&\mathbf{C}_{3,k}^{y_j}&\mathbf{C}_{3,k}^{z_j}\end{bmatrix}
 \end{aligned}
 \end{align}
-\tag{式8}
+\tag{式9}
 $$
+结合式9和式5、6可有如下定义：
+$$
+\begin{align*}
+\mathbf{F}_{m,n}^{\mathbf{p}_{j}}=
+\begin{bmatrix}\mathbf{C}_{m,n}^{x_{j}}&\mathbf{C}_{m,n}^{y_{j}}&\mathbf{C}_{m,n}^{z_{j}}\end{bmatrix}\in\mathbb{R}^{1\times3},\quad m,n\in\{1,2,3\}.\\
+=\begin{cases}
+ \frac{\mathbf{u}_m^T\frac{\partial\mathbf{A}}{\partial {p_{j}}}\mathbf{u}_n}{\lambda_n-\lambda_m} , \quad m\ne n \\
+0,\quad m=n
+\end{cases}
+\end{align*}
+\tag{式10}$$
+
+将式10带入式9中可得：
+$$
+\frac{\partial{u_{k}}}{\partial{p_{j}}}=
+U\begin{bmatrix}
+F_{1,k}^{p_{j}}\\
+F_{2,k}^{p_{j}}\\
+F_{3,k}^{p_{j}}
+\end{bmatrix}
+=UF_{k}^{p_{j}}\tag{式11}$$
+接下来对式10做以下化简，首先考虑$m\ne n$的情况，过程如下所示：
+$$
+\begin{align*}
+\frac{u_{m}^{T} \frac{\partial A }{\partial p_{j}} u_{n}}{\lambda_n -\lambda_m}\\
+=\frac{1}{\lambda_n -\lambda_m}\cdot u_{m}^{T} \frac{\partial A }{\partial p_{j}} u_{n}\\
+=\frac{1}{\lambda_n -\lambda_m}\cdot u_{m}^{T} \frac{\partial {\left(\mathbf{A}=\frac1N\sum_{i=1}^N\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)\left(\mathbf{p}_i-\bar{\mathbf{p}}\right)^T\right)} }{\partial p_{j}} u_{n}\\
+=\frac{1}{\lambda_n -\lambda_m}\cdot\left(\frac{1}{N}\sum_{i=1}^{N}\frac{u_{m}^{T}\left(p_{i}-\bar{p}\right)\left(p_{i}-\bar{p}\right)^{T}u_{n}}{\partial{p_j}}\right)\\
+=\frac{1}{\lambda_n -\lambda_m}
+\cdot\frac{1}{N}\sum_{i=1}^{N}
+\left(\frac{u_{m}^{T}\left(p_{i}-\bar{p}\right)\left(p_{i}-\bar{p}\right)^{T}u_{n}}{\partial{\left(p_{i}-\bar{p}\right)}}\cdot\frac{\partial{\left(p_{i}-\bar{p}\right)}}{\partial{p_j}}\right)\\
+=\frac{1}{\lambda_n -\lambda_m}
+\cdot\frac{1}{N}\sum_{i=1}^{N}
+\left(\left(p_{i}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\cdot\frac{\partial{\left(p_{i}-\bar{p}\right)}}{\partial{p_j}}\right)\\
+=\frac{1}{\lambda_n -\lambda_m}\\
+\cdot\frac{1}{N}\sum_{i=1}^{N}
+\left(\left(p_{i}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\cdot
+\frac{\partial{\left(p_{i}-\left(\frac{1}{N}\sum_{i=1}^{N}\mathbf{p}_{i}\right)\right)}}{\partial{p_j}}\right)\\
+=\frac{1}{\lambda_n -\lambda_m}\\
+\cdot\frac{1}{N}\sum_{i=1}^{N}
+\left(\left(p_{i}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\cdot
+\frac{\partial{\left(p_{i}-\left(\frac{1}{N}\sum_{i=1}^{N}\mathbf{p}_{i}\right)\right)}}{\partial{p_j}}\right)\\
+=\frac{1}{\lambda_n -\lambda_m}
+\frac{1}{N}\left(p_{j}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)
+\cdot
+\left(I-\frac{1}{N}I\right)\\
++\frac{1}{N}\sum_{i=1,i\ne{j}}^{N}{\left(\left(p_{i}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\cdot\left(-\frac{1}{N}I\right)\right)}\\
+=\frac{1}{\lambda_n -\lambda_m}
+\frac{1}{N}\left(p_{j}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)
+\cdot
+\left(I-\frac{1}{N}I\right)\\
++\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\left(-\frac{1}{N}I\right)
+\frac{1}{N}\sum_{i=1,i\ne{j}}^{N}\left(p_{i}-\bar{p}\right)^{T}\\
+=\frac{1}{\lambda_n -\lambda_m}
+\frac{1}{N}\left(p_{j}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)
+\cdot\left(I-\frac{1}{N}I\right)\\
++\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\left(-\frac{1}{N}I\right)
+\left(\left(\sum_{i=1}^{N}(p_{i}-\bar{p})^{T}\right)-\left(p_j-\bar{p}\right)^{T}\right)\\
+=\frac{1}{\lambda_n -\lambda_m}
+\frac{1}{N}\left(p_{j}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)
+\cdot\left(I-\frac{1}{N}I\right)\\
++\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\left(-\frac{1}{N}I\right)
+\left(0-\left(p_j-\bar{p}\right)^{T}\right)\\
+=\frac{1}{\lambda_n -\lambda_m}
+\frac{1}{N}\left(p_{j}-\bar{p}\right)^{T}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)\\
+=\frac{\left(p_{j}-\bar{p}\right)^{T}}{\left(\lambda_n -\lambda_m\right)N}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right)
+\end{align*}
+\tag{式12}$$
+结合$m=n$的情况，$\mathbf{F}_{m,n}^{\mathbf{p}_{j}}$的简化结果如下所示：
+$$
+F_{m,n}^{p_{j}}=
+\begin{cases}
+ \frac{\left(p_{j}-\bar{p}\right)^{T}}{\left(\lambda_n -\lambda_m\right)N}\left(u_{m}u_{n}^{T}+u_{n}u_{m}^{T}\right),\quad m\ne n\\
+0,\quad m=n
+\end{cases}
+\tag{式13}$$
 #### 推导二：该论文中的推导思路
 <span style="color:red;">后续补充！</span>
 > 定理1：
