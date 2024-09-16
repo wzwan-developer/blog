@@ -2,7 +2,7 @@
 title: 边缘化
 description: 《机器人学中的状态估计》系列
 date: 2024-09-02
-slug: 2_01
+slug: state_estimation_for_robotics/2_01
 image: gaussian-normal-distribution-graph.png
 hidden: false
 categories:

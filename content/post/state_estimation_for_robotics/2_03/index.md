@@ -2,7 +2,7 @@
 title: "如何理解概率论中的“矩”"
 description: 《机器人学中的状态估计》系列，本文转自博客：马同学图解数学
 date: 2024-09-09T11:12:48+08:00
-slug: 2_03
+slug: state_estimation_for_robotics/2_03
 image: gaussian-normal-distribution-graph.png
 license: 
 hidden: false

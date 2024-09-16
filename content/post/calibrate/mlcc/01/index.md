@@ -4,6 +4,7 @@ description: 多雷达外参标定章节
 date: 2024-09-11T09:05:20+08:00
 image: lidar_voxel.png
 math: true
+slug: mlcc/01
 license: 
 hidden: false
 comments: true
