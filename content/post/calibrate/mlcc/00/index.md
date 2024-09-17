@@ -72,6 +72,318 @@ $$
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;八叉树（Octree）是一种用于描述三维空间的树状数据结构。八叉树的每个节点表示一个正方体的体积元素，每个节点有8个子节点，这八个子节点所表示的体积元素加在一起等于父节点的体积。一般中心点作为节点的分叉中心。八叉树若不为空树的话，树中任一节点的子节点恰好只会是8个或0个，不会是0或8以外的数目。八叉树叶子节点代表了分辨率最高的情况。例如分辨率设成0.01m，那么每个叶子就是一个1cm见方的小方块。
 
 ## 代码详解
+### OCTO_TREE类
+``` C++
+class OCTO_TREE {
+public:
+    std::vector<vector_vec3d *> origin_pc;//原始三维数据
+    std::vector<vector_vec3d *> transform_pc;//变换后的三维数据
+    OCTO_TREE *leaves[8];
+
+    int win_size,//帧数（旋转一圈）
+     eigen_ratio;//面特征的阈值
+    OT_STATE octo_state;
+    int points_size, layer;
+
+    double voxel_center[3];
+    double quater_length;
+    Eigen::Vector3d value_vector;
+
+    OCTO_TREE(int window_size, double eigen_limit) : win_size(window_size), eigen_ratio(eigen_limit) {
+        octo_state = UNKNOWN;
+        layer = 0;
+        for (int i = 0; i < 8; i++)
+            leaves[i] = nullptr;
+
+        for (int i = 0; i < win_size; i++) {
+            origin_pc.emplace_back(new vector_vec3d());
+            transform_pc.emplace_back(new vector_vec3d());
+        }
+    }
+
+    ~OCTO_TREE() {
+        for (int i = 0; i < win_size; i++) {
+            delete (origin_pc[i]);
+            delete (transform_pc[i]);
+        }
+        origin_pc.clear();
+        transform_pc.clear();
+        for (int i = 0; i < 8; i++)
+            if (leaves[i] != nullptr)
+                delete leaves[i];
+    }
+
+    /**
+     * @brief recut函数用于对点云数据进行八叉树分割
+     */
+    void recut() {
+        // 如果当前八叉树节点的状态未知，则进行分割决策
+        if (octo_state == UNKNOWN) {
+            // 初始化点大小为0，将窗口内的所有点的大小相加
+            points_size = 0;
+            for (int i = 0; i < win_size; i++)
+                points_size += origin_pc[i]->size();
+
+            // 两个停止递归体素化的条件之一：如果点的总大小小于最小值，则将当前节点标记为中间节点并返回
+            if (points_size < MIN_PS) {
+                octo_state = MID_NODE;
+                return;
+            }
+
+            // 判断是否满足平面条件，如果满足则将当前节点标记为平面节点并返回
+            if (judge_eigen()) {
+                octo_state = PLANE;
+                return;
+            } else {
+                // 两个停止递归体素化的条件之一： 如果当前层达到限制，则将当前节点标记为中间节点并返回
+                if (layer == LAYER_LIMIT) {
+                    octo_state = MID_NODE;
+                    return;
+                }
+
+                // 遍历窗口内的每个点云，根据点的位置将其分配到相应的子节点
+                for (int i = 0; i < win_size; i++) {
+                    uint pt_size = transform_pc[i]->size();
+                    for (uint j = 0; j < pt_size; j++) {
+                        int xyz[3] = {0, 0, 0};
+                        // 根据点的坐标确定它在当前八叉树节点的子节点中的位置
+                        for (uint k = 0; k < 3; k++)
+                            if ((*transform_pc[i])[j][k] > voxel_center[k])
+                                xyz[k] = 1;
+
+                        int leafnum = 4 * xyz[0] + 2 * xyz[1] + xyz[2];
+                        // 如果当前子节点为空，则创建一个新的八叉树节点，并设置其参数
+                        if (leaves[leafnum] == nullptr) {
+                            leaves[leafnum] = new OCTO_TREE(win_size, eigen_ratio);
+                            leaves[leafnum]->voxel_center[0] = voxel_center[0] + (2 * xyz[0] - 1) * quater_length;
+                            leaves[leafnum]->voxel_center[1] = voxel_center[1] + (2 * xyz[1] - 1) * quater_length;
+                            leaves[leafnum]->voxel_center[2] = voxel_center[2] + (2 * xyz[2] - 1) * quater_length;
+                            leaves[leafnum]->quater_length = quater_length / 2;
+                            leaves[leafnum]->layer = layer + 1;
+                        }
+                        // 将当前点添加到相应的子节点中
+                        leaves[leafnum]->origin_pc[i]->push_back((*origin_pc[i])[j]);
+                        leaves[leafnum]->transform_pc[i]->push_back((*transform_pc[i])[j]);
+                    }
+                }
+            }
+        }
+
+        // 对每个子节点递归调用recut函数，继续进行分割
+        for (int i = 0; i < 8; i++)
+            if (leaves[i] != nullptr)
+                leaves[i]->recut();
+    }
+
+    /**
+     * @brief 计算和判断给定点云数据的协方差矩阵的特征值的比值
+                是本文2.1节的协方差矩阵计算的具体实现
+     * @return bool 根据特征值的比值判断返回true或false
+     */
+    bool judge_eigen() {
+        Eigen::Matrix3d covMat(Eigen::Matrix3d::Zero());
+        Eigen::Vector3d center(0, 0, 0);
+        for (int i = 0; i < win_size; i++) {
+            uint pt_size = transform_pc[i]->size();
+            for (uint j = 0; j < pt_size; j++) {
+                covMat += (*transform_pc[i])[j] * (*transform_pc[i])[j].transpose();
+                center += (*transform_pc[i])[j];
+            }
+        }
+        // 计算中心点
+        center /= points_size;
+        // 计算协方差矩阵
+        covMat = covMat / points_size - center * center.transpose();
+        // 使用Eigen库计算协方差矩阵的特征值
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(covMat);
+        value_vector = saes.eigenvalues();
+        // 判断特征值的比值是否大于给定的阈值，是则返回true，否则返回false  
+        // Eigen::SelfAdjointEigenSolver 求解的特征值默认从小到大排序。
+        if (eigen_ratio < saes.eigenvalues()[2] / saes.eigenvalues()[0]) return true;
+        return false;
+    }
+
+    /**
+     * @brief 对点云根据特征分类进行颜色渲染
+     * @param cloud 变换到世界坐标系的点云
+     */
+    void tras_display(pcl::PointCloud<pcl::PointXYZINormal>::Ptr &cloud) {
+        float ref = 255.0 * rand() / (RAND_MAX + 1.0f);
+        pcl::PointXYZINormal ap;
+        ap.intensity = ref;
+
+        if (octo_state == PLANE) {
+            for (int i = 0; i < win_size; i++)
+                for (uint j = 0; j < transform_pc[i]->size(); j++) {
+                    ap.x = (*transform_pc[i])[j](0);
+                    ap.y = (*transform_pc[i])[j](1);
+                    ap.z = (*transform_pc[i])[j](2);
+                    ap.normal_x = sqrt(value_vector[1] / value_vector[0]);
+                    ap.normal_y = sqrt(value_vector[2] / value_vector[0]);
+                    ap.normal_z = sqrt(value_vector[0]);
+                    cloud->points.push_back(ap);
+                }
+        } else {
+            if (layer == LAYER_LIMIT) return;
+            layer++;
+            for (int i = 0; i < 8; i++)
+                if (leaves[i] != nullptr)
+                    leaves[i]->tras_display(cloud);
+        }
+    }
+
+    void feed_pt(LM_OPTIMIZER &lm_opt) {
+        if (octo_state == PLANE)
+            lm_opt.push_voxel(origin_pc);
+        else
+            for (int i = 0; i < 8; i++)
+                if (leaves[i] != nullptr)
+                    leaves[i]->feed_pt(lm_opt);
+    }
+};
+```
+### downsample_voxel体素下采样函数
+``` C++
+/**
+ * @brief 基于体素网格对点云进行下采样
+ *        本文自适应体素化章节提到，如果一个体素内包含太多点，
+ *        则会导致二阶闭式导数中的Hessian矩阵维度过高，在这种
+ *        情况下可以进行将点进行一下平均，以降低维度
+ * @param pc 输入和输出的点云数据
+ * @param voxel_size 体素网格的大小，决定了下采样的精度
+ * @return
+ */
+void downsample_voxel(pcl::PointCloud<PointType>& pc, double voxel_size)
+{
+    // 检查体素大小是否过小，如果小于0.01则不进行下采样
+    if (voxel_size < 0.01)
+        return;
+
+    // 使用哈希表存储每个体素网格中的点，以实现快速查找和去重
+    std::unordered_map<VOXEL_LOC, M_POINT> feature_map;
+    size_t pt_size = pc.size();
+
+    // 遍历每个点，计算其在体素网格中的位置，并将点加入相应的体素网格
+    for (size_t i = 0; i < pt_size; i++)
+    {
+        PointType &pt_trans = pc[i];
+        float loc_xyz[3];
+        // 计算点在每个维度上所在的体素网格索引
+        for (int j = 0; j < 3; j++)
+        {
+            loc_xyz[j] = pt_trans.data[j] / voxel_size;
+            // 如果点的体素网格索引小于0，则减去1，保证索引非负
+            if (loc_xyz[j] < 0)
+                loc_xyz[j] -= 1.0;
+        }
+
+        // 构造体素网格位置的键
+        VOXEL_LOC position((int64_t)loc_xyz[0], (int64_t)loc_xyz[1], (int64_t)loc_xyz[2]);
+        // 在哈希表中查找当前体素网格位置
+        auto iter = feature_map.find(position);
+        if (iter != feature_map.end())
+        {
+            // 如果当前体素网格已存在点，则累加点的坐标，并增加点的计数
+            iter->second.xyz[0] += pt_trans.x;
+            iter->second.xyz[1] += pt_trans.y;
+            iter->second.xyz[2] += pt_trans.z;
+            iter->second.count++;
+        }
+        else
+        {
+            // 如果当前体素网格不存在点，则创建新的体素网格点，并加入哈希表
+            M_POINT anp;
+            anp.xyz[0] = pt_trans.x;
+            anp.xyz[1] = pt_trans.y;
+            anp.xyz[2] = pt_trans.z;
+            anp.count = 1;
+            feature_map[position] = anp;
+        }
+    }
+
+    // 重新计算下采样后的点云大小，并清空原有数据
+    pt_size = feature_map.size();
+    pc.clear();
+    pc.resize(pt_size);
+
+    // 遍历哈希表，计算每个体素网格点的平均坐标，并填充到输出点云数据中
+    size_t i = 0;
+    for (auto iter = feature_map.begin(); iter != feature_map.end(); ++iter)
+    {
+        pc[i].x = iter->second.xyz[0] / iter->second.count;
+        pc[i].y = iter->second.xyz[1] / iter->second.count;
+        pc[i].z = iter->second.xyz[2] / iter->second.count;
+        i++;
+    }
+}
+```
+### cut_voxel体素裁剪函数
+``` C++
+/**
+ * @brief 对特征点云进行体素裁剪，根据给定的特征点云和变换参数，构建体素结构并更新特征地图。
+ *
+ * @param feature_map 特征地图，存储体素位置和对应的八叉树指针的哈希表。
+ * @param feature_pts 特征点云数据。
+ * @param q 旋转矩阵，表示特征点云相对于世界坐标的旋转。在本文中来源于初始可用的基准雷达的轨迹$\mathcal{S}$
+ * @param t 平移向量，表示特征点云相对于世界坐标的平移。
+ * @param f_head 特征头索引，用于标识特征点云中的特定部分。
+ * @param window_size 窗口大小，用于体素中点云数据的窗口化处理。
+ * @param eigen_threshold 特征值阈值，用于体素中点云数据的特征提取。
+ */
+void cut_voxel(unordered_map<VOXEL_LOC, OCTO_TREE*>& feature_map,
+               pcl::PointCloud<PointType>::Ptr feature_pts,
+               Eigen::Quaterniond q, Eigen::Vector3d t, int f_head, int window_size, double eigen_threshold)
+{
+    uint pt_size = feature_pts->size();
+
+    for(uint i = 0; i < pt_size; i++)
+    {
+        PointType& pt = feature_pts->points[i];
+        Eigen::Vector3d pt_origin(pt.x, pt.y, pt.z);
+        // 根据旋转和平移参数，将点从基准雷达坐标系转换到世界坐标系
+        Eigen::Vector3d pt_trans = q * pt_origin + t;
+        float loc_xyz[3];
+        // 计算点在体素空间中的位置
+        for(int j = 0; j < 3; j++)
+        {
+            loc_xyz[j] = pt_trans[j] / voxel_size;
+            // 确保体素位置为整数，因此对负值进行调整
+            if(loc_xyz[j] < 0)
+                loc_xyz[j] -= 1.0;
+        }
+
+
+        VOXEL_LOC position((int64_t)loc_xyz[0], (int64_t)loc_xyz[1], (int64_t)loc_xyz[2]);
+        // 在特征地图中查找当前体素位置对应的八叉树
+        auto iter = feature_map.find(position);
+        if(iter != feature_map.end())
+        {
+            // 将点添加到已存在的八叉树的原始点云和变换点云中
+            iter->second->origin_pc[f_head]->push_back(pt_origin);
+            iter->second->transform_pc[f_head]->push_back(pt_trans);
+        }
+        else
+        {
+            // 如果未找到，创建一个新的八叉树
+            OCTO_TREE* ot = new OCTO_TREE(window_size, eigen_threshold);
+            // 将点添加到新的八叉树的原始点云和变换点云中
+            ot->origin_pc[f_head]->push_back(pt_origin);
+            ot->transform_pc[f_head]->push_back(pt_trans);
+
+            // 设置八叉树的体素中心
+            ot->voxel_center[0] = (0.5 + position.x) * voxel_size;
+            ot->voxel_center[1] = (0.5 + position.y) * voxel_size;
+            ot->voxel_center[2] = (0.5 + position.z) * voxel_size;
+            // 设置八叉树的特征体素长度
+            ot->quater_length = voxel_size / 4.0;
+            // 初始化八叉树的层级
+            ot->layer = 0;
+            // 将新的八叉树添加到特征地图中
+            feature_map[position] = ot;
+        }
+    }
+}
+```
 <span style="color:red">正在持续更新中！</span>
 ## 参考文献
 
