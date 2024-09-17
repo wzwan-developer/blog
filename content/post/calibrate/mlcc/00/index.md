@@ -35,16 +35,32 @@ Fig. 3: A) LiDAR point cloud segmented with the adaptive voxelization. Points wi
 
 ## 相关理论
 论文中关于自适应体素并未提及到重要信息，但是提到了参考文献4[《BALM: Bundle Adjustment for Lidar Mapping》](https://www.arxiv.org/pdf/2010.08215)。
-### 自适应体素化过程
+### 自适应体素化
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;我们在默认大小的3D空间中重复体素化，如果当前体素中的所有特征点都位于平面，则将当前体素与包含的特征点一起保存在内存中；否则，将当前体素分解为八个八分体，并继续检查每个八分体直到达到最小尺寸。在具体实现过程中有以下细节：
 - 如果一个体素内包含太多的特征点，则会导致文章[《Chapter 01: Multi-LiDAR Extrinsic Calibration》]({{< ref "/post/calibrate/mlcc/01/index.md" >}})中推导过程章节中二阶闭式导数中的Hessian矩阵维度过高，在这种情况下，我们可以将点进行平均，以实现降采样但不降低映射一致性；
 - 同时，二阶闭式导数中的Hessian矩阵推导过程中提到$\lambda_m\ne\lambda_n$,因此当遇到$\lambda$的代数多重性大于1的体素需要跳过（忽略）；
 - 只需检查体素所包含的点，是否位于同一平面时允许更大的方差，则能自然地扩展到非平面特征（BLAM只提到了平面特征和边缘特征）；
 - 设置了两个条件来停止递归体素化：一个是树的最大深度，另一个是体素的最小点数。
 
-<span style="color:red">正在持续更新中！</span>
-### 八叉树数据结构
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;其中，判断体素是否为平面的方法是计算体素内所有的点云的协方差矩阵，判断最大特征值与最小特征值的比值是否大于一定的阈值，如果大于则为平面：
 
+首先计算中心点$p_c$,即所有点的均值点,如下所示：
+$$
+p_c=\frac{1}{N}\sum_{i=1}^{N}p_i
+$$
+接着计算协方差矩阵：
+$$
+\begin{align*}
+C=\frac{1}{N}\sum_{i=1}^{N}\big(p_i - c\big)\big(p_i - c\big)^T\\
+=\frac{1}{N}\sum_{i=1}^{N}\big(p_ip_i^T-p_ic^T-cp_i^T+cc^T\big)\\
+=\frac{1}{N}\sum_{i=1}^{N}p_ip_i^T-\frac{1}{N}\sum_{i=1}^{N}p_ic^T
+-c\big(\frac{1}{N}\sum_{i=1}^{N}p_i\big)^T+cc^T\\
+=\frac{1}{N}\sum_{i=1}^{N}p_ip_i^T-cc^T-cc^T+cc^T\\
+=\frac{1}{N}\sum_{i=1}^{N}p_ip_i^T-cc^T
+\end{align*}
+$$
+### 八叉树数据结构
+<span style="color:red">正在持续更新中！</span>
 ## 代码详解
 ## 参考文献
 [1][《Targetless Extrinsic Calibration of Multiple Small FoV LiDARs and Cameras using Adaptive Voxelization》](https://arxiv.org/pdf/2109.06550)
