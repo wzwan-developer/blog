@@ -424,9 +424,8 @@ $$
 +{}_{L_{i}}^{L_{0}}{t}\bigg)+\delta_{L_{0}}^{G}{t}_{t_{j}}\\
 \approx{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R\cdot{p_{k}}
 +{}_{L_{0}}^{G}{t}_{t_{j}}\big)+{}_{L_{0}}^{G}{t}_{t_{j}}\\
-+{}_{L_0}^GR_{t_j}\left(p_k\right)^{\wedge}\cdot_{L_i}^{L_0}\phi+_{L_0}^GR_{t_j}\delta_{L_i}^{L_0}t
-+{}_{L_{0}}^{G}R_{t_{j}}
-\bigg({}_{L_{i}}^{L_{0}}Rp_{k}
+-{}_{L_0}^GR_{t_j}\left(p_k\right)^{\wedge}\cdot_{L_i}^{L_0}\phi+_{L_0}^GR_{t_j}\delta_{L_i}^{L_0}t
+-{}_{L_{0}}^{G}R_{t_{j}}\bigg({}_{L_{i}}^{L_{0}}Rp_{k}
 +{}_{L_{i}}^{L_{0}}{t}\bigg)^{\wedge}{}_{L_{0}}^{G}\phi_{t_{j}}+\delta_{L_{0}}^{G}{t}_{t_{j}}
 \end{align*}
 \tag{式6}
@@ -434,9 +433,9 @@ $$
 然后，结合式4和式6可得$\delta{^Gp_k}$，如下所示：
 $$
 \begin{align*}
-\delta^{G}{p}_{k}\approx{}_{L_{0}}^{G}R_{t_{j}}
+\delta^{G}{p}_{k}\approx-{}_{L_{0}}^{G}R_{t_{j}}
 \big({}_{L_{i}}^{L_{0}}{R}{p}_{k}+{}_{L_{i}}^{L_{0}}{t}\big)^{\wedge}{}_{L_{0}}^{G}\phi_{t_{j}}
-+\delta_{L_{0}}^{G}{t}_{t_{j}}+\\{}_{L_{0}}^{G}R_{t_{j}}\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
++\delta_{L_{0}}^{G}{t}_{t_{j}}-\\{}_{L_{0}}^{G}R_{t_{j}}\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
 +{}_{L_{0}}^{G}{R}_{t_{j}}\delta_{L_{i}}^{L_{0}}{t}\\
 =D\cdot \delta x ,
 \end{align*}
@@ -461,9 +460,9 @@ D =\begin{bmatrix}\vdots&\vdots\\\cdots {D}_{k,p}^{\mathcal{S}}&\cdots {D}_{k,q}
 \end{align*}
 $$
 *<span style="color:red">注意：</span>* 论文中的结果与推导有差异，下面是论文给的结果，<span style="color:blue;">待排查！</span>
-$$\delta^{G}{p}_{k}\approx{}_{L_{0}}^{G}R_{t_{j}}
+$$\delta^{G}{p}_{k}\approx{\color{red}+}{}_{L_{0}}^{G}R_{t_{j}}
 \big({}_{L_{i}}^{L_{0}}{R}{p}_{k}+{}_{L_{i}}^{L_{0}}{t}\big)^{\wedge}{}_{L_{0}}^{G}\phi_{t_{j}}
-+\delta_{L_{0}}^{G}{t}_{t_{j}}+\\{}_{L_{\color{red}i}}^{G}R_{t_{j}}\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
++\delta_{L_{0}}^{G}{t}_{t_{j}}{\color{red}+}\\{}_{L_{\color{red}i}}^{G}R_{t_{j}}\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
 +{}_{L_{0}}^{G}{R}_{t_{j}}\delta_{L_{i}}^{L_{0}}{t}$$
 
 上面用到一些近似化：
