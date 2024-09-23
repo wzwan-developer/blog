@@ -741,3 +741,5 @@ $$
 [3][《BALM论文阅读》——epsilonjohn的博客文章](http://epsilonjohn.club/2020/11/03/%E6%96%87%E7%8C%AE%E9%98%85%E8%AF%BB/BALM%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/)
 
 [4][《A micro Lie theory for state estimation in robotics》](https://arxiv.org/pdf/1812.01537)
+
+[5][《多个LiDAR-Camera无目标跨视角联合标定方法》](https://blog.csdn.net/CV_Autobot/article/details/134173441)
