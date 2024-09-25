@@ -559,7 +559,7 @@ $$
     }
 ```
 2. 计算雅可比矩阵和海森矩阵
-由于仅主优化轨迹，$D=\frac{\delta p}{\delta T}$不同于2.2.4章节的公式7。具体如下
+由于仅优化轨迹，$D=\frac{\delta p}{\delta T}$不同于2.2.4章节的公式7。具体如下
 $$
 D=\begin{bmatrix}
 -{}^{G}_{L_0}R_{t_j}(p_k)^{T}&I
@@ -576,7 +576,7 @@ $$
 {}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}H_{k,j}\\H_{k,j}\end{bmatrix}\begin{bmatrix}-{}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}&I\end{bmatrix}\\
 =\begin{bmatrix}
 -{}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}H_{k,j}{}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}&{}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}H_{k,j}\\
-H_{k,j} {}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}& H_{k,j} 
+-H_{k,j} {}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}& H_{k,j} 
 \end{bmatrix}
 \end{align*}\tag{式2}
 $$
@@ -726,13 +726,224 @@ $$
 ```
 ### 二阶段：优化副雷达到主雷达的外参
 将一阶段中优化出的主雷达里程计作为真值，对于每一个副雷达，使用主雷达里程计以及各副雷达到主雷达的外参将各个副雷达的点云投影回世界坐标系构成局部地图，并和一阶段中的地图叠在一起构成新的局部地图。和一阶段相同，对使用自适应体素化方法提取面特征，并对于每一个特征体素递归构建基于点面误差的一致性评价指标。
+
+由于主雷达轨迹固定，$D=\frac{\delta p}{\delta T}$不同于2.2.4章节的公式7。具体如下
+$$
+\begin{align*}
+{}^{G}{p}_{k}+\delta^{G}{p}_{k}=
+{}_{L_{0}}^{G}R_{t_{j}}
+\bigg({}_{L_{i}}^{L_{0}}R\exp\big({}_{L_{i}}^{L_{0}}\phi^{\wedge}\big)p_{k}
++{}_{L_{i}}^{L_{0}}{t}+\delta_{L_{i}}^{L_{0}}{t}\bigg)
++{}_{L_{0}}^{G}{t}_{t_{j}}\\
+\approx{}{}_{L_{0}}^{G}R_{t_{j}}
+\bigg({}_{L_{i}}^{L_{0}}R\big(I+{}_{L_{i}}^{L_{0}}\phi^{\wedge}\big)p_{k}
++{}_{L_{i}}^{L_{0}}{t}+\delta_{L_{i}}^{L_{0}}{t}\bigg)
++{}_{L_{0}}^{G}{t}_{t_{j}}\\
+\approx{}{}_{L_{0}}^{G}{R}_{t_{j}}
+\bigg({}_{L_{i}}^{L_{0}}Rp_{k}+{}_{L_{i}}^{L_{0}}R{}_{L_{i}}^{L_{0}}\phi^{\wedge}p_{k}
++{}_{L_{i}}^{L_{0}}{t}+\delta_{L_{i}}^{L_{0}}{t}\bigg)
++{}_{L_{0}}^{G}{t}_{t_{j}}\\
+\approx{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R\cdot{p_{k}}+{}_{L_{0}}^{G}{t}_{t_{j}}\big)
++{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R{}_{L_{i}}^{L_{0}}\phi^{\wedge}p_{k}
++\delta_{L_{i}}^{L_{0}}{t}\big)
++{}_{L_{0}}^{G}{t}_{t_{j}}\\
+\approx{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R\cdot{p_{k}}+{}_{L_{0}}^{G}{t}_{t_{j}}\big)
++{}_{L_{0}}^{G}{t}_{t_{j}}
++{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R{}_{L_{i}}^{L_{0}}\phi^{\wedge}p_{k}
++\delta_{L_{i}}^{L_{0}}{t}\big)\\
+\approx{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R\cdot{p_{k}}+{}_{L_{0}}^{G}{t}_{t_{j}}\big)
++{}_{L_{0}}^{G}{t}_{t_{j}}
++{}_{L_{0}}^{G}R_{t_{j}}\big(-{}_{L_{i}}^{L_{0}}R{p_k}^{\wedge}{}_{L_{i}}^{L_{0}}\phi
++\delta_{L_{i}}^{L_{0}}{t}\big)
+\end{align*}
+\tag{式1}
+$$
+则可推导对应$\delta^{G}{p}_{k}$的表达式：
+$$
+\delta^{G}{p}_{k}={}_{L_{0}}^{G}R_{t_{j}}\big((-{}_{L_{i}}^{L_{0}}R{p_k})^{\wedge}{}_{L_{i}}^{L_{0}}\phi
++\delta_{L_{i}}^{L_{0}}{t}\big)\tag{式2}
+$$
+因此可得：
+$$
+D=\frac{\delta p}{\delta T}=\begin{bmatrix}
+-{}_{L_{0}}^{G}R_{t_{j}}({}_{L_{i}}^{L_{0}}R{p_k})^{\wedge}&
+{}_{L_{0}}^{G}R_{t_{j}}
+\end{bmatrix}
+$$
+由于$\frac{\delta \lambda}{\delta p}$不变，所以$H$和$J$没有变换将其带入2.2.3章节的式9即可推导出$\bar{J}$和$\bar{H}$。
+其中关于Hessian矩阵块的更新，以点$P(k,j)$为例推导如下其对$\bar{H}_{00}$的更新如下：
+$$
+\begin{align*}
+\bar{H}_{0,0}=D_{0,k}^{T}H_{k,j}D_{j,0}\\
+=\begin{bmatrix}-{}_{L_{0}}^{G}R_{t_{j}}({}_{L_{i}}^{L_{0}}R{p_k})^{\wedge}&{}_{L_{0}}^{G}R_{t_{j}}\end{bmatrix}^{T}
+H_{k,j}
+\begin{bmatrix}-{}_{L_{0}}^{G}R_{t_{j}}({}_{L_{i}}^{L_{0}}R{p_j})^{\wedge}&{}_{L_{0}}^{G}R_{t_{j}}\end{bmatrix}\\
+=\begin{bmatrix} ({}_{L_{i}}^{L_{0}}R{p_k})^{\wedge}{}_{L_{0}}^{G}R_{t_{j}}^{T} \\{{}_{L_{0}}^{G}R_{t_{j}}}^{T}\end{bmatrix}
+H_{k,j}
+\begin{bmatrix}-{}_{L_{0}}^{G}R_{t_{j}}({}_{L_{i}}^{L_{0}}R{p_j})^{\wedge}&{}_{L_{0}}^{G}R_{t_{j}}\end{bmatrix}\\
+=\begin{bmatrix}
+({}_{L_{i}}^{L_{0}}R{p_k})^{\wedge}{}_{L_{0}}^{G}R_{t_{j}}^{T}H_{k,j}\\{{}_{L_{0}}^{G}R_{t_{j}}}^{T}H_{k,j}\end{bmatrix}
+\begin{bmatrix}-{}_{L_{0}}^{G}R_{t_{j}}({}_{L_{i}}^{L_{0}}R{p_j})^{\wedge}&{}_{L_{0}}^{G}R_{t_{j}}\end{bmatrix}\\
+=\begin{bmatrix}
+-({}_{L_{i}}^{L_{0}}R{p_k})^{\wedge}{}_{L_{0}}^{G}R_{t_{j}}^{T}H_{k,j}{}_{L_{0}}^{G}R_{t_{j}}({}_{L_{i}}^{L_{0}}R{p_j})^{\wedge}&({}_{L_{i}}^{L_{0}}R{p_k})^{\wedge}{}_{L_{0}}^{G}R_{t_{j}}^{T}H_{k,j}{}_{L_{0}}^{G}R_{t_{j}}\\
+-{{}_{L_{0}}^{G}R_{t_{j}}}^{T}H_{k,j}{}_{L_{0}}^{G}R_{t_{j}}({}_{L_{i}}^{L_{0}}R{p_j})^{\wedge} & {{}_{L_{0}}^{G}R_{t_{j}}}^{T}H_{k,j}{}_{L_{0}}^{G}R_{t_{j}}
+\end{bmatrix}
+\end{align*}\tag{式3}
+$$
 ``` C++
+/**
+     * @brief 计算Hessian矩阵、梯度转置和残差的函数
+     *
+     * @param poses      输入的姿态向量
+     * @param ts         输入的平移向量向量
+     * @param refQs      参考帧的姿态向量
+     * @param refTs      参考帧的平移向量向量
+     * @param head       头部索引
+     * @param end        结束索引
+     * @param Hess       输出的Hessian矩阵
+     * @param JacT       输出的梯度转置向量
+     * @param residual   输出的残差
+     */
+    void calculate_HJ(vector_quad &poses, vector_vec3d &ts,
+                      vector_quad &refQs, vector_vec3d &refTs, int head, int end,
+                      Eigen::MatrixXd &Hess, Eigen::VectorXd &JacT, double &residual) {
+        // 初始化Hessian矩阵、梯度转置和残差
+        Hess.setZero();
+        JacT.setZero();
+        residual = 0;
+        Eigen::MatrixXd _hess(Hess);
+        Eigen::MatrixXd _jact(JacT);
+
+        // 遍历头部到结束之间的帧
+        for (int i = head; i < end; i++) {
+            vector_vec3d &reforigin_pts = *refOriginPts[i];
+            std::vector<int> &refwin_num = *refWinNums[i];
+            size_t refpts_size = reforigin_pts.size();
+
+            Eigen::Vector3d vec_tran;
+            vector_vec3d pt_trans(refpts_size);
+            std::vector<Eigen::Matrix3d> point_xis(refpts_size);
+            Eigen::Vector3d center(Eigen::Vector3d::Zero());
+            Eigen::Matrix3d covMat(Eigen::Matrix3d::Zero());
+
+            // 处理参考帧中的点
+            for (size_t j = 0; j < refpts_size; j++) {
+                vec_tran = refQs[0] * reforigin_pts[j];
+                point_xis[j] = -wedge(vec_tran); // 计算点的交叉积
+                vec_tran = poses[refwin_num[j]] * vec_tran;
+                pt_trans[j] = vec_tran + poses[refwin_num[j]] * refTs[0] + ts[refwin_num[j]];
+      
+                center += pt_trans[j];
+                covMat += pt_trans[j] * pt_trans[j].transpose();
+            }
+
+            // 处理基础帧中的点
+            vector_vec3d &baseorigin_pts = *baseOriginPts[i];
+            std::vector<int> &basewin_num = *baseWinNums[i];
+            size_t basepts_size = baseorigin_pts.size();
+
+            for (size_t j = 0; j < basepts_size; j++) {
+                vec_tran = poses[basewin_num[j]] * baseorigin_pts[j] + ts[basewin_num[j]];
+                center += vec_tran;
+                covMat += vec_tran * vec_tran.transpose();
+            }
+
+            // 计算均值和协方差矩阵
+            double N = refpts_size + basepts_size;
+            covMat = covMat - center * center.transpose() / N;
+            covMat = covMat / N;
+            center = center / N;
+
+            // 计算协方差矩阵的特征值和特征向量
+            Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(covMat);
+            Eigen::Vector3d eigen_value = saes.eigenvalues();
+
+            Eigen::Matrix3d U = saes.eigenvectors();
+            Eigen::Vector3d u[3];
+            for (int j = 0; j < 3; j++)
+                u[j] = U.block<3, 1>(0, j);
+
+
+            //损失函数降维之后优化的目标函数转为$\arg min_{\mathcal{S}，\mathcal{E}_L}\sum_{l}\lambda_{3}{(A_l)}$
+            //其中$\lambda_3$是矩阵A的最小特征值，u0即为最小特征值
+            Eigen::Matrix3d ukukT = u[0] * u[0].transpose();
+            Eigen::Vector3d vec_Jt;
+        
+            for (size_t j = 0; j < refpts_size; j++) {
+                pt_trans[j] = pt_trans[j] - center;
+                vec_Jt = 2.0 / N * ukukT * pt_trans[j];
+                // 更新Jacobian矩阵 $\bar{J}=JD$
+                _jact.block<3, 1>(6 * 0, 0) -=
+                        point_xis[j] * poses[refwin_num[j]].toRotationMatrix().transpose() * vec_Jt;
+                _jact.block<3, 1>(6 * 0 + 3, 0) +=
+                        poses[refwin_num[j]].toRotationMatrix().transpose() * vec_Jt;
+            }
+
+            // 计算Hessian矩阵的辅助变量            
+            Eigen::Matrix3d Hessian33;
+            Eigen::Matrix3d F;
+            std::vector<Eigen::Matrix3d> F_(3);
+            for (size_t j = 0; j < 3; j++) {
+                if (j == 0) {//定理2：公式10 $F_{m,n}^{p_j}$ n=0,m=0的情况
+                    F_[j].setZero();
+                    continue;
+                }
+                Hessian33 = u[j] * u[0].transpose();
+                //定理2：公式10 $F_{m,n}^{p_j}$ n=0,m!=0的情况
+                //注意此辅助函数缺乏$(p_i-\bar{p})^T$，下面的公式会有补充
+                F_[j] = 1.0 / N / (eigen_value[0] - eigen_value[j]) *
+                        (Hessian33 + Hessian33.transpose());
+            }
+
+            // 计算Hessian矩阵的元素
+            Eigen::Matrix3d h33;
+            size_t rownum, colnum;
+            for (size_t j = 0; j < refpts_size; j++) {
+                for (int f = 0; f < 3; f++)
+                //此时为完整的辅助变量F
+                    F.block<1, 3>(f, 0) = pt_trans[j].transpose() * F_[f];
+
+                F = U * F;
+                colnum = 6 * 0;
+                for (size_t k = 0; k < refpts_size; k++) {
+                    Hessian33 = u[0] * (pt_trans[k]).transpose() * F +
+                                u[0].dot(pt_trans[k]) * F;
+
+                    rownum = 6 * 0;
+                    if (k == j)
+                        Hessian33 += (N - 1) / N * ukukT;
+                    else
+                        Hessian33 -= 1.0 / N * ukukT;
+                    Hessian33 = 2.0 / N * Hessian33;
+                    //公式推导见前文描述公式3
+                    _hess.block<3, 3>(rownum + 3, colnum + 3) +=
+                            poses[refwin_num[k]].toRotationMatrix().transpose() *
+                            Hessian33 * poses[refwin_num[j]].toRotationMatrix();
+                    _hess.block<3, 3>(rownum + 3, colnum) +=
+                            poses[refwin_num[k]].toRotationMatrix().transpose() * Hessian33 *
+                            poses[refwin_num[j]].toRotationMatrix() * point_xis[j];
+                    _hess.block<3, 3>(rownum, colnum + 3) -=
+                            point_xis[k] * poses[refwin_num[k]].toRotationMatrix().transpose() *
+                            Hessian33 * poses[refwin_num[j]].toRotationMatrix();
+                    _hess.block<3, 3>(rownum, colnum) -=
+                            point_xis[k] * poses[refwin_num[k]].toRotationMatrix().transpose() *
+                            Hessian33 * poses[refwin_num[j]].toRotationMatrix() * point_xis[j];
+                }
+            }
+
+            // 更新残差、Hessian矩阵和梯度转置
+            residual += eigen_value[0];
+            Hess += _hess;
+            JacT += _jact;
+            _hess.setZero();
+            _jact.setZero();
+        }
+    }
 ```
 ### 三阶段：联合优化雷达外参和主激光雷达里程计
 使用主雷达里程计以及各副雷达到主雷达的外参将各个副雷达的点云投影回世界坐标系构成局部地图，将所有雷达的局部地图堆叠在一起构成新的局部地图。同样的，对于这个局部地图构建基于点面误差的损失函数。
 
 
-### 
 ## 参考文献
 [1][《Targetless Extrinsic Calibration of Multiple Small FoV LiDARs and Cameras using Adaptive Voxelization》](https://arxiv.org/pdf/2109.06550)
 
