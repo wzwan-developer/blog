@@ -843,7 +843,7 @@ $$
 ``` C++
 //以下代码选自第三阶段的计算雅可比和海森矩阵的代码
 /**
-* @brief 计算雅可比矩阵和海森矩阵并进行更新，推导过程见2.2.3章节ß
+* @brief 计算雅可比矩阵和海森矩阵并进行更新，推导过程见2.2.3章节
 * @param poses 基准雷达的轨迹的旋转变量
 * @param ts 基准雷达的轨迹的平移变量
 * @param refQs 参考雷达的轨迹的旋转变量
@@ -874,7 +874,7 @@ void calculate_HJ(vector_quad &poses, vector_vec3d &ts,
       refpts_size_part.reserve(ref_size + 1);
       refpts_size_part.emplace_back(0);
       //计算所有点的个数
-      for (int j = 0; j < ref_size; j++) {//ref_size代表参考雷达的个数 ß
+      for (int j = 0; j < ref_size; j++) {//ref_size代表参考雷达的个数
           vector_vec3d &reforigin_pts = *refOriginPts[j][i];
           refpts_size.emplace_back(reforigin_pts.size());
           refpts_size_all += reforigin_pts.size();
