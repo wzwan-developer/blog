@@ -2,7 +2,7 @@
 title: "Chapter 01: Multi-LiDAR Extrinsic Calibration"
 description: 论文《 Targetless Extrinsic Calibration of Multiple Small FoV LiDARs and Cameras using Adaptive Voxelization》解读系列。
 date: 2024-09-11T09:05:20+08:00
-image: lidar_voxel.png
+image: dense_map.jpg
 math: true
 slug: mlcc/01
 license: 
