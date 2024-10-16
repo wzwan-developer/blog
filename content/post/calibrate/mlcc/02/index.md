@@ -5,7 +5,6 @@ date: 2024-10-09T17:22:01+08:00
 image: camera_voxel.png
 math: true
 slug: mlcc/02
-license: 
 hidden: false
 comments: true
 draft: false
