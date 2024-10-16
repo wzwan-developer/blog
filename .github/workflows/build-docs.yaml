@@ -38,7 +38,7 @@ jobs:
       - name: Deploy Web
         uses: peaceiris/actions-gh-pages@v4
         with:
-          PERSONAL_TOKEN: ${{secrets.WZWAN_TOKEN}}
+          github_token: ${{secrets.WZWAN_TOKEN}}
           EXTERNAL_REPOSITORY: wzwan-developer/wzwan-developer.github.io
           PUBLISH_BRANCH: main
           PUBLISH_DIR: ./public
