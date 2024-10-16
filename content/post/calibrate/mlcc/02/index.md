@@ -8,7 +8,7 @@ slug: mlcc/02
 license: 
 hidden: false
 comments: true
-draft: true
+draft: false
 categories:
 - Calibrate
 tags:
@@ -71,3 +71,478 @@ $$ \begin{align*}
 $$
 
 ## 理论推导
+
+论文中相机标定部分的内容是比较容易理解的，只需找到匹配的点云边缘点和图像边缘点，将点云边缘点投影到图像上，通过
+最小化重投影误差即可对相机外参进行优化，其中最重要的是作者建立边缘线上点云与图像的匹配点的实现思路。至于最后的
+误差公式的一阶导数推导，暂不进行说明，因为代码实现中直接使用了ceres的自动求导。<span style="color:yellow">
+后续有空余时间可以补充！</span>
+
+建立匹配点的思路为：将所有点云边缘线上全局坐标系下的点云投影到基准雷达下(注意，是所有位姿都投影，而非对应的某
+一帧，因为不同图像可能会看到同一个边缘线)，再通过cv::projectPoints()函数直接投到像素坐标系下，遍历每个边缘
+点，判断其距离最近的5个图像上的边缘点，如果5个点距离该点都小于一定的值则检索该点距离最近的5个点，拟合点云的方向
+向量，图像也是一样的处理，将那5个点拟合方向向量。需要注意的是图像的分辨率是有限的，尤其是在较低分辨率的相机中，多个三维点
+可能在投影到二维平面后，落在同一个像素上。因此那些投影之后落在同一个位置的三维点要取平均值。此时所有的三维点都将有
+其对应的二维点。
+
+## 代码详解
+### 平面处理
+1. 体素化提取空间中的平面
+
+下面代码选自ba.hpp,通过判断特征值的比值确认平面，核心内容与之前的雷达标定部分是一样的，但是多了一些细节处理，就是将平面拆分成8份后，将每一份的法向量与整体的法向量进行一致性评估。具体如下：
+``` C++
+
+  bool judge_eigen(int layer) {
+    VOX_FACTOR covMat = sig_orig;
+
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(covMat.cov());
+    value_vector = saes.eigenvalues();
+    center = covMat.v / covMat.N;//平面中心点
+    direct = saes.eigenvectors().col(0);//平面的法向量
+
+    eigen_ratio = saes.eigenvalues()[0] / saes.eigenvalues()[2]; // [0] is the smallest
+    //NOTE:与雷达标定部分检测平面刚好相反，这里是小值比大值。
+    if (eigen_ratio > eigen_thr) return 0;
+    //NOTE:两个较小的特征值比值如果比较接近，那么说明在剩余两个方向分部比较均匀，是线状点云
+    if (saes.eigenvalues()[0] / saes.eigenvalues()[1] > 0.1) return 0; // 排除线状点云
+
+    double eva0 = saes.eigenvalues()[0];
+    double sqr_eva0 = sqrt(eva0);
+    //NOTE:选择平面中心点沿着平面法向量的方向延伸一定的距离的点作为边界点
+    Eigen::Vector3d center_turb = center + 5 * sqr_eva0 * direct;
+    //NOTE:将平面拆分为8个子平面
+    vector<VOX_FACTOR> covMats(8);
+
+    for (Eigen::Vector3d ap : vec_orig) {
+      int xyz[3] = {0, 0, 0};
+      for (int k = 0; k < 3; k++)
+        if (ap(k) > center_turb[k])
+          xyz[k] = 1;
+
+      Eigen::Vector3d pvec(ap(0), ap(1), ap(2));
+
+      int leafnum = 4 * xyz[0] + 2 * xyz[1] + xyz[2];
+      covMats[leafnum].push(pvec);
+    }
+
+    //NOTE:重新计算子平面的法向量，判断与平面法向量的夹角是否足够小cos(θ)，当所有的都满足，则认为该平面是平面，否则不是平面
+    int num_all = 0, num_qua = 0;
+    for (int i = 0; i < 8; i++)
+      if (covMats[i].N > MIN_PT) {
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(covMats[i].cov());
+        Eigen::Vector3d child_direct = saes.eigenvectors().col(0);
+
+        if (fabs(child_direct.dot(direct)) > 0.98)
+          num_qua++;
+        num_all++;
+      }
+    if (num_qua != num_all) return 0;
+    return 1;
+  }
+
+```
+2. 平面整合
+选自calib_camera.hpp，将体素中属于同一平面的点云进行合并，判断条件是两个平面法向量相似性很高，且彼此法向量距离对方的平面中心点距离很近。
+``` C++
+ /**
+   * @brief 合并平面
+   * @param origin_list 原始平面列表
+   * @param merge_list 合并后的平面列表
+   */
+  void mergePlane(std::vector<Plane *> &origin_list, std::vector<Plane *> &merge_list) {
+    for (size_t i = 0; i < origin_list.size(); i++)
+      origin_list[i]->id = 0;
+
+    int current_id = 1;
+    for (auto iter = origin_list.end() - 1; iter != origin_list.begin(); iter--) {
+      for (auto iter2 = origin_list.begin(); iter2 != iter; iter2++) {
+        //NOTE:计算当前平面和其他平面之间的法向量的差和法向量的和，以及平面中心到平面的距离，
+        // 如果满足条件则认为两个平面是同一个平面，方向相同，距离接近，非常有可能为同一平面
+        Eigen::Vector3d normal_diff = (*iter)->normal - (*iter2)->normal;
+        Eigen::Vector3d normal_add = (*iter)->normal + (*iter2)->normal;
+        double dis1 = fabs((*iter)->normal(0) * (*iter2)->center(0) +
+            (*iter)->normal(1) * (*iter2)->center(1) +
+            (*iter)->normal(2) * (*iter2)->center(2) + (*iter)->d);
+        double dis2 = fabs((*iter2)->normal(0) * (*iter)->center(0) +
+            (*iter2)->normal(1) * (*iter)->center(1) +
+            (*iter2)->normal(2) * (*iter)->center(2) + (*iter2)->d);
+        if (normal_diff.norm() < 0.2 || normal_add.norm() < 0.2)
+          if (dis1 < 0.05 && dis2 < 0.05) {
+            if ((*iter)->id == 0 && (*iter2)->id == 0) {
+              (*iter)->id = current_id;
+              (*iter2)->id = current_id;
+              current_id++;
+            } else if ((*iter)->id == 0 && (*iter2)->id != 0)
+              (*iter)->id = (*iter2)->id;
+            else if ((*iter)->id != 0 && (*iter2)->id == 0)
+              (*iter2)->id = (*iter)->id;
+          }
+      }
+    }
+    .....
+  }
+```
+### 平面交线（边缘线）处理
+1. 点云边缘线处理
+
+首先是通过两个平面法向量和中心点，计算交线上一点。假设$c_1$和$c_2$分别为平面1和2的中心点，$n_1$和$n_2$分别为平面1和2的法向量。而通过向量的叉乘很容易得到两个平面相交直线的法向量为$d=n1\times{n2}$。通过以下三个方程可以求得交线上的一点坐标$p$:
+$$
+\begin{align*}
+n_1\cdot(p-c_1)=0\tag{1}\\
+n_2\cdot(p-c_2)=0\tag{2}\\
+d\cdot(p-c_1)=0\tag{3}
+\end{align*}
+$$
+其中1式含义为交线上一点与平面1中心点$c_1$构成的向量垂直于$n_1$,式2同理，式3的含义为交线上一点与平面1中心点$c_1$构成的向量垂直于直线。因此我们设定：
+$$
+\begin{align*}
+A=\begin{bmatrix}
+n_1^{T}\\d^{T}\\n_2^{T}
+\end{bmatrix}\tag{4}\\
+b=\begin{bmatrix}n_1\cdot{c_1}\quad{d}\cdot{c_1}\quad{n_2}\cdot{c_2}\end{bmatrix}\tag{5}\\
+A\cdot{x}=b\tag{6}
+\end{align*}
+$$
+对式6进行QR分解则能得到交线上一点，且该点与$c1$构成的向量是垂直于交线的。另外：
+$$
+\begin{align*}
+(c_2-O)\cdot{d}\times{d}\tag{7}\\
+(c_2-0)-(c_2-O)\cdot{d}\times{d}\tag{8}
+\end{align*}
+$$
+式7为$c_2$到交线投影位置与$O$点构成的向量,式8则为$c_2$与直线上一点构成垂直于交线的向量；
+代码如下所示
+``` C++
+void projectLine(const Plane *plane1, const Plane *plane2,
+                   std::vector<Eigen::Vector3d> &line_point) {
+    float theta = plane1->normal.dot(plane2->normal);
+    //夹角要大于一定的值
+    if (!(theta > theta_max_ && theta < theta_min_)) return;
+//    std::cout << "theta:" << theta << std::endl;
+//    std::cout << "theta_max_" << theta_max_ << " theta_min_" << theta_min_ << std::endl;
+    Eigen::Vector3d c1 = plane1->center;
+    Eigen::Vector3d c2 = plane2->center;
+    Eigen::Vector3d n1 = plane1->normal;
+    Eigen::Vector3d n2 = plane2->normal;
+
+    Eigen::Matrix3d A;
+    Eigen::Vector3d d = n1.cross(n2).normalized();
+    A.row(0) = n1.transpose();
+    A.row(1) = d.transpose();
+    A.row(2) = n2.transpose();
+    //NOTE:描述了三个关系 $n_1\cdot{(p-c_1)}=0$ 、$n_2\cdot{(p-c_2)}=0$、$ d\cdot{(p-c_1)}$
+    //该点与c1平面内中心点构成的向量与n1垂直，与c2平面中心点构成的向量与n2垂直，与c1平面中心点构成·与两个平面法向量、
+    //垂直方向的法向量构成的向量垂直，所以该点为平面交线上一点
+    Eigen::Vector3d b(n1.dot(c1), d.dot(c1), n2.dot(c2));
+    Eigen::Vector3d O = A.colPivHouseholderQr().solve(b);
+
+    double c1_to_line = (c1 - O).norm();
+    //NOTE:注意计算点的时候约束了，该点与c1构成的向量是垂直于d的，但是没约束c2
+    double c2_to_line = ((c2 - O) - (c2 - O).dot(d) * d).norm();
+
+    if (c1_to_line / c2_to_line > 8 || c2_to_line / c1_to_line > 8) return;
+
+    if (plane1->points_size < plane2->points_size)
+      for (auto pt : plane1->plane_points) {
+        Eigen::Vector3d p = (pt - O).dot(d) * d + O;
+        line_point.push_back(p);
+      }
+    else
+      for (auto pt : plane2->plane_points) {
+        Eigen::Vector3d p = (pt - O).dot(d) * d + O;
+        line_point.push_back(p);
+      }
+
+    return;
+  }
+```
+进一步处理，计算在体素内所有点中距离平面投影线上的点最近的5个点，将其存放到相应的容器中。
+``` C++
+/**
+   * @brief 提取体素地图中平面的边缘点
+   * @param surf_map
+   */
+  void estimate_edge(std::unordered_map<VOXEL_LOC, OCTO_TREE_ROOT *> &surf_map) {
+//    ros::Rate loop(500);
+    lidar_edge_clouds = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>);
+    for (auto iter = surf_map.begin(); iter != surf_map.end(); iter++) {
+      std::vector<Plane *> plane_list;
+      std::vector<Plane *> merge_plane_list;
+      iter->second->get_plane_list(plane_list);
+
+      if (plane_list.size() > 1) {
+        pcl::KdTreeFLANN<pcl::PointXYZI> kd_tree;
+        pcl::PointCloud<pcl::PointXYZI> input_cloud;
+        //将当前所有体素的点云加入到kd树中，用于快速最临近搜索
+        for (auto pv : iter->second->all_points) {
+          pcl::PointXYZI p;
+          p.x = pv(0);
+          p.y = pv(1);
+          p.z = pv(2);
+          input_cloud.push_back(p);
+        }
+        kd_tree.setInputCloud(input_cloud.makeShared());
+        mergePlane(plane_list, merge_plane_list);
+        if (merge_plane_list.size() <= 1) continue;
+#ifdef DEBUG
+        for (auto plane : merge_plane_list) {
+          static int i = 0;
+          pcl::PointCloud<pcl::PointXYZRGB> color_cloud;
+          std::vector<unsigned int> colors;
+          colors.push_back(static_cast<unsigned int>(rand() % 255));
+          colors.push_back(static_cast<unsigned int>(rand() % 255));
+          colors.push_back(static_cast<unsigned int>(rand() % 255));
+          for (auto pv : plane->plane_points) {
+            pcl::PointXYZRGB pi;
+            pi.x = pv[0];
+            pi.y = pv[1];
+            pi.z = pv[2];
+            pi.r = colors[0];
+            pi.g = colors[1];
+            pi.b = colors[2];
+            color_cloud.points.push_back(pi);
+          }
+          pcl::io::savePCDFile("merge_plane_" + std::to_string(i++)+".pcd", color_cloud);
+        }
+#endif
+        for (size_t p1_index = 0; p1_index < merge_plane_list.size() - 1; p1_index++)
+          for (size_t p2_index = p1_index + 1; p2_index < merge_plane_list.size(); p2_index++) {
+            std::vector<Eigen::Vector3d> line_point;
+            //计算两个平面之间的交线
+            projectLine(merge_plane_list[p1_index], merge_plane_list[p2_index], line_point);
+
+            if (line_point.size() == 0) break;
+
+            pcl::PointCloud<pcl::PointXYZI> line_cloud;
+
+            for (size_t j = 0; j < line_point.size(); j++) {
+              pcl::PointXYZI p;
+              p.x = line_point[j][0];
+              p.y = line_point[j][1];
+              p.z = line_point[j][2];
+
+              int K = 5;
+              // 创建两个向量，分别存放近邻的索引值、近邻的中心距
+              std::vector<int> pointIdxNKNSearch(K);
+              std::vector<float> pointNKNSquaredDistance(K);
+              if (kd_tree.nearestKSearch(p, K, pointIdxNKNSearch, pointNKNSquaredDistance) == K) {
+                Eigen::Vector3d tmp(input_cloud.points[pointIdxNKNSearch[K - 1]].x,
+                                    input_cloud.points[pointIdxNKNSearch[K - 1]].y,
+                                    input_cloud.points[pointIdxNKNSearch[K - 1]].z);
+                // if(pointNKNSquaredDistance[K-1] < 0.01)
+                if ((tmp - line_point[j]).norm() < 0.05) {
+                  line_cloud.points.push_back(p);
+                  lidar_edge_clouds->points.push_back(p);
+                }
+              }
+            }
+          }
+      }
+    }
+  }
+```
+2. 图像交线处理
+代码主要是通过opencv的cv::Canny()函数实现，没有太多额外的处理，有以下几点需要关注：
+``` C++
+    ...
+ //高斯模糊，减小图像中的噪声和细节，保留图像的边缘
+cv::GaussianBlur(src_img[a], src_img[a], cv::Size(gaussian_size, gaussian_size), 0, 0);
+cv::Mat canny_result = cv::Mat::zeros(src_img[a].rows, src_img[a].cols, CV_8UC1);
+//低于阈值1的像素点会被认为不是边缘；
+//高于阈值2的像素点会被认为是边缘；
+//在阈值1和阈值2之间的像素点,若与第2步得到的边缘像素点相邻，则被认为是边缘，否则被认为不是边缘。
+cv::Canny(src_img[a], canny_result, canny_threshold, canny_threshold * 3, 3, true);
+    ...
+```
+### 构建匹配对
+本文第2章理论推导中对建立匹配对的过程进行了一定的描述，这里不再复述。
+``` C++
+  void buildVPnp(const Camera &cam,
+                 const Vector6d &extrinsic_params, const int dis_threshold,
+                 const bool show_residual,
+                 const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &cam_edge_clouds_2d,
+                 const pcl::PointCloud<pcl::PointXYZI>::Ptr &lidar_edge_clouds_3d,
+                 std::vector<VPnPData> &pnp_list) {
+    pnp_list.clear();
+    cv::Mat camera_matrix = (cv::Mat_<double>(3, 3)
+        << cam.fx_, cam.s_, cam.cx_, 0.0, cam.fy_, cam.cy_, 0.0, 0.0, 1.0);
+    cv::Mat distortion_coeff =
+        (cv::Mat_<double>(1, 5) << cam.k1_, cam.k2_, cam.p1_, cam.p2_, cam.k3_);
+    Eigen::AngleAxisd rotation_vector3;
+    rotation_vector3 =
+        Eigen::AngleAxisd(extrinsic_params[0], Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(extrinsic_params[1], Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(extrinsic_params[2], Eigen::Vector3d::UnitX());
+    Eigen::Quaterniond q_(rotation_vector3);
+    for (size_t a = 0; a < base_poses.size(); a += 1)  // for each camera pose
+    {
+      std::vector<std::vector<std::vector<pcl::PointXYZI>>> img_pts_container;
+      for (int y = 0; y < cam.height_; y++) {
+        std::vector<std::vector<pcl::PointXYZI>> row_pts_container;
+        for (int x = 0; x < cam.width_; x++) {
+          std::vector<pcl::PointXYZI> col_pts_container;
+          row_pts_container.push_back(col_pts_container);
+        }
+        img_pts_container.push_back(row_pts_container);
+      }
+      std::vector<cv::Point3f> pts_3d;
+      std::vector<cv::Point2f> pts_2d;
+      cv::Mat r_vec = (cv::Mat_<double>(3, 1)
+          << rotation_vector3.angle() * rotation_vector3.axis().transpose()[0],
+          rotation_vector3.angle() * rotation_vector3.axis().transpose()[1],
+          rotation_vector3.angle() * rotation_vector3.axis().transpose()[2]);
+      Eigen::Vector3d t_(extrinsic_params[3], extrinsic_params[4], extrinsic_params[5]);
+      cv::Mat t_vec = (cv::Mat_<double>(3, 1) << t_(0), t_(1), t_(2));
+
+      for (size_t i = 0; i < lidar_edge_clouds_3d->size(); i++) {
+        pcl::PointXYZI point_3d = lidar_edge_clouds_3d->points[i];
+        Eigen::Vector3d pt1(point_3d.x, point_3d.y, point_3d.z);
+        Eigen::Vector3d pt2(0, 0, 1);
+        Eigen::Vector3d pt;
+        pt = base_poses[a].q.inverse() * (pt1 - base_poses[a].t);//转回到基准雷达坐标系下
+        //NOTE:将点转化到相机坐标系下，其与原点构成的向量与相机视野方向向量（0,0,1）夹角很小则说明是在相机视野内的点
+        if (cos_angle(q_ * pt + t_, pt2) > 0.8) // FoV check
+          pts_3d.emplace_back(cv::Point3f(pt(0), pt(1), pt(2)));
+      }
+      //将雷达点投到图像上
+      cv::projectPoints(pts_3d, r_vec, t_vec, camera_matrix, distortion_coeff, pts_2d);
+
+      pcl::PointCloud<pcl::PointXYZ>::Ptr line_edge_cloud_2d(new pcl::PointCloud<pcl::PointXYZ>);
+      std::vector<int> line_edge_cloud_2d_number;
+      for (size_t i = 0; i < pts_2d.size(); i++) {
+        pcl::PointXYZ p;
+        p.x = pts_2d[i].x;
+        p.y = -pts_2d[i].y;
+        p.z = 0;
+        pcl::PointXYZI pi_3d;
+        pi_3d.x = pts_3d[i].x;
+        pi_3d.y = pts_3d[i].y;
+        pi_3d.z = pts_3d[i].z;
+        pi_3d.intensity = 1;
+        //判断是否在图像视野内
+        if (p.x > 0 && p.x < cam.width_ && pts_2d[i].y > 0 && pts_2d[i].y < cam.height_) {
+          if (img_pts_container[pts_2d[i].y][pts_2d[i].x].size() == 0) {
+            line_edge_cloud_2d->points.push_back(p);
+            img_pts_container[pts_2d[i].y][pts_2d[i].x].push_back(pi_3d);
+          } else
+            img_pts_container[pts_2d[i].y][pts_2d[i].x].push_back(pi_3d);
+        }
+      }
+      if (show_residual)
+        if (a == 16) {
+          cv::Mat residual_img = getConnectImg(
+              cam, dis_threshold, cam_edge_clouds_2d[a], line_edge_cloud_2d);
+          std::string img_name = std::to_string(a);
+          cv::imshow(img_name, residual_img);
+          cv::waitKey(10);
+        }
+
+      pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree_cam(new pcl::search::KdTree<pcl::PointXYZ>());
+      pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree_lidar(new pcl::search::KdTree<pcl::PointXYZ>());
+      pcl::PointCloud<pcl::PointXYZ>::Ptr search_cloud =
+          pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::PointCloud<pcl::PointXYZ>::Ptr tree_cloud_cam =
+          pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::PointCloud<pcl::PointXYZ>::Ptr tree_cloud_lidar =
+          pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+      kdtree_cam->setInputCloud(cam_edge_clouds_2d[a]);
+      kdtree_lidar->setInputCloud(line_edge_cloud_2d);
+      tree_cloud_cam = cam_edge_clouds_2d[a];
+      tree_cloud_lidar = line_edge_cloud_2d;
+      search_cloud = line_edge_cloud_2d;
+
+      int K = 5; // 指定近邻个数
+      // 创建两个向量，分别存放近邻的索引值、近邻的中心距
+      std::vector<int> pointIdxNKNSearch(K);
+      std::vector<float> pointNKNSquaredDistance(K);
+      std::vector<int> pointIdxNKNSearchLidar(K);
+      std::vector<float> pointNKNSquaredDistanceLidar(K);
+      std::vector<cv::Point2d> lidar_2d_list;
+      std::vector<cv::Point2d> img_2d_list;
+      std::vector<Eigen::Vector2d> camera_direction_list;
+      std::vector<Eigen::Vector2d> lidar_direction_list;
+      std::vector<int> lidar_2d_number;
+      for (size_t i = 0; i < search_cloud->points.size(); i++) {
+        pcl::PointXYZ searchPoint = search_cloud->points[i];
+        //查找点云的临近点，主要目的是为了计算点所在直线的方向
+        kdtree_lidar->nearestKSearch(searchPoint, K, pointIdxNKNSearchLidar,
+                                     pointNKNSquaredDistanceLidar);
+        if (kdtree_cam->nearestKSearch(searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
+          bool dis_check = true;
+          //如果点云中某个点与图像中最临近的5个点，有一个距离超出阈值，则认为该点与图像中该点距离太远，丢弃
+          for (int j = 0; j < K; j++) {
+            float distance =
+                sqrt(pow(searchPoint.x - tree_cloud_cam->points[pointIdxNKNSearch[j]].x, 2) +
+                    pow(searchPoint.y - tree_cloud_cam->points[pointIdxNKNSearch[j]].y, 2));
+            if (distance > dis_threshold) dis_check = false;
+          }
+          if (dis_check) {
+            cv::Point p_l_2d(search_cloud->points[i].x, -search_cloud->points[i].y);
+            cv::Point p_c_2d(tree_cloud_cam->points[pointIdxNKNSearch[0]].x,
+                             -tree_cloud_cam->points[pointIdxNKNSearch[0]].y);
+            Eigen::Vector2d direction_cam(0, 0);
+            std::vector<Eigen::Vector2d> points_cam;
+            for (size_t i = 0; i < pointIdxNKNSearch.size(); i++) {
+              Eigen::Vector2d p(tree_cloud_cam->points[pointIdxNKNSearch[i]].x,
+                                -tree_cloud_cam->points[pointIdxNKNSearch[i]].y);
+              points_cam.push_back(p);
+            }
+            //计算点的分布方向，即直线方向，与计算通过协方差的特征值判断平面法向量类似
+            calcDirection(points_cam, direction_cam);
+
+            Eigen::Vector2d direction_lidar(0, 0);
+            std::vector<Eigen::Vector2d> points_lidar;
+            for (size_t i = 0; i < pointIdxNKNSearch.size(); i++) {
+              Eigen::Vector2d p(tree_cloud_lidar->points[pointIdxNKNSearchLidar[i]].x,
+                                -tree_cloud_lidar->points[pointIdxNKNSearchLidar[i]].y);
+              points_lidar.push_back(p);
+            }
+            calcDirection(points_lidar, direction_lidar);
+
+            if (p_l_2d.x > 0 && p_l_2d.x < cam.width_ && p_l_2d.y > 0 &&
+                p_l_2d.y < cam.height_) {
+              lidar_2d_list.push_back(p_l_2d);
+              img_2d_list.push_back(p_c_2d);
+              camera_direction_list.push_back(direction_cam);
+              lidar_direction_list.push_back(direction_lidar);
+            }
+          }
+        }
+      }
+      for (size_t i = 0; i < lidar_2d_list.size(); i++) {
+        int y = lidar_2d_list[i].y;
+        int x = lidar_2d_list[i].x;
+        int pixel_points_size = img_pts_container[y][x].size();
+        if (pixel_points_size > 0) {
+          VPnPData pnp;
+          pnp.x = 0;
+          pnp.y = 0;
+          pnp.z = 0;
+          pnp.u = img_2d_list[i].x;
+          pnp.v = img_2d_list[i].y;
+          //NOTE:图像的分辨率是有限的，尤其是在较低分辨率的相机中，多个三维点可能在投影到二维平面后，落在同一个像素上。
+          for (int j = 0; j < pixel_points_size; j++) {
+            pnp.x += img_pts_container[y][x][j].x;
+            pnp.y += img_pts_container[y][x][j].y;
+            pnp.z += img_pts_container[y][x][j].z;
+          }
+          pnp.x = pnp.x / pixel_points_size;
+          pnp.y = pnp.y / pixel_points_size;
+          pnp.z = pnp.z / pixel_points_size;
+          pnp.direction = camera_direction_list[i];
+          pnp.direction_lidar = lidar_direction_list[i];
+          pnp.number = 0;
+          float theta = pnp.direction.dot(pnp.direction_lidar);
+          // 判断两个方向夹角是否满足条件
+          if (theta > direction_theta_min_ || theta < direction_theta_max_)
+            pnp_list.push_back(pnp);
+        }
+      }
+    }
+  }
+```
+<span style="color:red">正在更新中...</span>
+
+## 参考文献
+[1][《Targetless Extrinsic Calibration of Multiple Small FoV LiDARs and Cameras using Adaptive Voxelization》](https://arxiv.org/pdf/2109.06550)
+
+[2][《BALM: Bundle Adjustment for Lidar Mapping》](https://www.arxiv.org/pdf/2010.08215)
