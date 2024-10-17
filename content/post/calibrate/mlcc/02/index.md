@@ -80,14 +80,13 @@ $$
 一帧，因为不同图像可能会看到同一个边缘线)，再通过cv::projectPoints()函数直接投到像素坐标系下，遍历每个边缘
 点，判断其距离最近的5个图像上的边缘点，如果5个点距离该点都小于一定的值则检索该点距离最近的5个点，拟合点云的方向
 向量，图像也是一样的处理，将那5个点拟合方向向量。需要注意的是图像的分辨率是有限的，尤其是在较低分辨率的相机中，多个三维点
-可能在投影到二维平面后，落在同一个像素上。因此那些投影之后落在同一个位置的三维点要取平均值。此时所有的三维点都将有
-其对应的二维点。
+可能在投影到二维平面后，落在同一个像素上。因此那些投影之后落在同一个位置的三维点要取平均值。此时所有的三维点都将有其对应的二维点。
 
 ## 代码详解
-### 平面处理
-1. 体素化提取空间中的平面
+### 提取平面
+1. 通过体素化提取空间中的平面
 
-下面代码选自ba.hpp,通过判断特征值的比值确认平面，核心内容与之前的雷达标定部分是一样的，但是多了一些细节处理，就是将平面拆分成8份后，将每一份的法向量与整体的法向量进行一致性评估。具体如下：
+下面代码选自ba.hpp,通过判断协方差矩阵的特征值比值确定平面，与之前的雷达标定部分关于平面的提取是一样的，但是多了一些细节处理，其额外将平面拆分成8份，将每一份的法向量与整体的法向量进行一致性评估。具体如下：
 ``` C++
 
   bool judge_eigen(int layer) {
@@ -141,7 +140,7 @@ $$
 ```
 2. 平面整合
 
-选自calib_camera.hpp，将体素中属于同一平面的点云进行合并，判断条件是两个平面法向量相似性很高，且彼此法向量距离对方的平面中心点距离很近。
+选自calib_camera.hpp，将体素中属于同一平面的点云进行合并，判断条件是两个平面法向量相似度很高，且彼此法向量距离对方的平面中心点距离很近。
 ``` C++
  /**
    * @brief 合并平面
@@ -181,10 +180,10 @@ $$
     .....
   }
 ```
-### 平面交线（边缘线）处理
-1. 点云边缘线处理
+### 提取边缘线
+1. 提取点云边缘线
 
-首先是通过两个平面法向量和中心点，计算交线上一点。假设$c_1$和$c_2$分别为平面1和2的中心点，$n_1$和$n_2$分别为平面1和2的法向量。而通过向量的叉乘很容易得到两个平面相交直线的法向量为$d=n1\times{n2}$。通过以下三个方程可以求得交线上的一点坐标$p$:
+首先是通过两个平面法向量和中心点计算边缘线上一点。过程为假设$c_1$和$c_2$分别为平面1和2的中心点，$n_1$和$n_2$分别为平面1和2的法向量。通过向量的叉乘很容易得到两个平面相交直线的法向量为$d=n1\times{n2}$。通过以下三个方程可以求得交线上的一点坐标$p$:
 $$
 \begin{align*}
 n_1\cdot(p-c_1)=0\tag{1}\\
@@ -192,7 +191,7 @@ n_2\cdot(p-c_2)=0\tag{2}\\
 d\cdot(p-c_1)=0\tag{3}
 \end{align*}
 $$
-其中1式含义为交线上一点与平面1中心点$c_1$构成的向量垂直于$n_1$,式2同理，式3的含义为交线上一点与平面1中心点$c_1$构成的向量垂直于直线。因此我们设定：
+式1表示为边缘线上一点与$c_1$构成的向量垂直于$n_1$,式2同理，式3表示边缘线上一点与$c_1$构成的向量垂直于直线所在的法向量。由此可整理得到：
 $$
 \begin{align*}
 A=\begin{bmatrix}
@@ -202,7 +201,7 @@ b=\begin{bmatrix}n_1\cdot{c_1}\quad{d}\cdot{c_1}\quad{n_2}\cdot{c_2}\end{bmatrix
 A\cdot{x}=b\tag{6}
 \end{align*}
 $$
-对式6进行QR分解则能得到交线上一点，且该点与$c1$构成的向量是垂直于交线的。另外：
+对式6进行QR分解则能得到边缘线上一点，且该点与$c1$构成的向量是垂直于边缘线所在的法向量的。另外：
 $$
 \begin{align*}
 (c_2-O)\cdot{d}\times{d}\tag{7}\\
@@ -340,7 +339,7 @@ void projectLine(const Plane *plane1, const Plane *plane2,
     }
   }
 ```
-2. 图像交线处理
+2. 提取图像边缘线
 代码主要是通过opencv的cv::Canny()函数实现，没有太多额外的处理，有以下几点需要关注：
 ``` C++
     ...
@@ -539,6 +538,150 @@ cv::Canny(src_img[a], canny_result, canny_threshold, canny_threshold * 3, 3, tru
       }
     }
   }
+```
+### 优化问题
+1. 最小化重投影误差
+
+本文第一章节中提到了相机校准问题可以表达为：
+$$\mathcal{E}_{C}^{*}=\arg\min_{\mathcal{E}_{C}}\sum_{i}\sum_{\mathbf{I}_{l,j}\in\mathcal{I}_{i}}\left(\mathbf{n}_{i,l,j}^{T}\left({}^{\mathbf{I}_{l,j}}\mathbf{p}_{i}-\mathbf{q}_{i,l,j}\right)\right)\tag{1}$$
+<span style="color:red;">上式暂时还没理解,等后面再看！</span>，但是好在代码实现上与问题表达是有差异，代码是优化点到直线上的距离，与BLAM中关于边缘特征问题表述是一样的，具体如下所示：
+
+![边缘特征](edge_feature.png)
+
+注意图中关于边缘点的表达可以进行以下转化：
+$(I-nn^{T})(p_{f_i}-q)=(p_{f_i}-q)-nn^{T}(p_{f_i}-q)$
+其中，$nn^{T}(p_{f_i}-q)$表达将$p_{f_i}-q$向量投影到$n$向量上。
+现在将本文的相关变量带入式中可以得到表达式为：
+$$
+\mathcal{E}_{C}^{*}=\arg\min_{\mathcal{E}_{C}}\sum_{i}\sum_{\mathbf{I}_{l,j}\in\mathcal{I}_{i}}\left((I-\mathbf{n}_{i,l,j}\mathbf{n}_{i,l,j}^{T})\left({}^{\mathbf{I}_{l,j}}\mathbf{p}_{i}-\mathbf{q}_{i,l,j}\right)\right)\tag{2}
+$$。
+
+下面代码选自calib_camera.cpp,内容为ceres误差函数的建立：
+``` C++
+class vpnp_calib {
+ public:
+  vpnp_calib(VPnPData p) { pd = p; }
+
+  template<typename T>
+  bool operator()(const T *_q, const T *_t, T *residuals) const {
+    Eigen::Matrix<T, 3, 3> innerT = inner.cast<T>();
+    Eigen::Matrix<T, 4, 1> distorT = distor.cast<T>();
+    Eigen::Quaternion<T> q_incre{_q[3], _q[0], _q[1], _q[2]};
+    Eigen::Matrix<T, 3, 1> t_incre{_t[0], _t[1], _t[2]};
+    Eigen::Matrix<T, 3, 1> p_l(T(pd.x), T(pd.y), T(pd.z));
+    Eigen::Matrix<T, 3, 1> p_c = q_incre.toRotationMatrix() * p_l + t_incre;//将点云转换到相机坐标系下
+    Eigen::Matrix<T, 3, 1> p_2 = innerT * p_c;
+    T uo = p_2[0] / p_2[2];
+    T vo = p_2[1] / p_2[2];//转化为像素坐标系下，并进行归一化
+    const T &fx = innerT.coeffRef(0, 0);
+    const T &cx = innerT.coeffRef(0, 2);
+    const T &fy = innerT.coeffRef(1, 1);
+    const T &cy = innerT.coeffRef(1, 2);
+    T xo = (uo - cx) / fx;
+    T yo = (vo - cy) / fy;
+    T r2 = xo * xo + yo * yo;
+    T r4 = r2 * r2;
+    T distortion = 1.0 + distorT[0] * r2 + distorT[1] * r4;
+    T xd = xo * distortion + (distorT[2] * xo * yo + distorT[2] * xo * yo) +
+        distorT[3] * (r2 + xo * xo + xo * xo);
+    T yd = yo * distortion + distorT[3] * xo * yo + distorT[3] * xo * yo +
+        distorT[2] * (r2 + yo * yo + yo * yo);
+    T ud = fx * xd + cx;
+    T vd = fy * yd + cy;//使用针孔模型添加畸变
+
+    if (T(pd.direction(0)) == T(0.0) && T(pd.direction(1)) == T(0.0)) {
+      residuals[0] = ud - T(pd.u);
+      residuals[1] = vd - T(pd.v);
+    } else {
+      residuals[0] = ud - T(pd.u);
+      residuals[1] = vd - T(pd.v);
+      //NOTE:这里用了BALM中的误差公式，而非MLCC中的公式
+      //构建向量$(I-nn^{T})({}^{I_{l,j}}p_{i}-q_{i,l,j})$以求点到直线的距离，然后最小化这个距离
+      Eigen::Matrix<T, 2, 2> I = Eigen::Matrix<float, 2, 2>::Identity().cast<T>();
+      Eigen::Matrix<T, 2, 1> n = pd.direction.cast<T>();
+      Eigen::Matrix<T, 1, 2> nt = pd.direction.transpose().cast<T>();
+      Eigen::Matrix<T, 2, 2> V = n * nt;
+      V = I - V;
+      Eigen::Matrix<T, 2, 1> R = Eigen::Matrix<float, 2, 1>::Zero().cast<T>();
+      R.coeffRef(0, 0) = residuals[0];
+      R.coeffRef(1, 0) = residuals[1];
+      R = V * R;
+      residuals[0] = R.coeffRef(0, 0);
+      residuals[1] = R.coeffRef(1, 0);
+    }
+    return true;
+  }
+
+  static ceres::CostFunction *Create(VPnPData p) {
+    return (new ceres::AutoDiffCostFunction<vpnp_calib, 2, 4, 3>(new vpnp_calib(p)));
+  }
+
+ private:
+  VPnPData pd;
+};
+
+```
+2.粗标定
+
+代码中还实现了一个粗标定的方法，工作方式为调整初始参数，判断匹配对的数目是否增加，如果增加，则认为图像和点云配准更加准确，此时对参数进行更新，否则进入下一组值。
+``` C++
+void roughCalib(Calibration &calibra, double search_resolution, int max_iter) {
+  float match_dis = 20;
+  Eigen::Vector3d fix_adjust_euler(0, 0, 0);
+  std::cout << "roughCalib ...." << std::endl;
+  for (int n = 0; n < 2; n++) {//进行两轮
+    for (int round = 0; round < 3; round++) {//依次调整三个角度
+      for (size_t a = 0; a < calibra.cams.size(); a++) {//对所有相机进行优化
+        Eigen::Matrix3d rot = calibra.cams[a].ext_R;
+        Vector3d transation = calibra.cams[a].ext_t;
+        float min_cost = 1000;
+        for (int iter = 0; iter < max_iter; iter++) {
+          Eigen::Vector3d adjust_euler = fix_adjust_euler;
+          //正负交叉
+          adjust_euler[round] = fix_adjust_euler[round] + pow(-1, iter) * int(iter / 2) * search_resolution;
+          Eigen::Matrix3d adjust_rotation_matrix;
+          adjust_rotation_matrix =
+              Eigen::AngleAxisd(adjust_euler[0], Eigen::Vector3d::UnitZ()) *
+                  Eigen::AngleAxisd(adjust_euler[1], Eigen::Vector3d::UnitY()) *
+                  Eigen::AngleAxisd(adjust_euler[2], Eigen::Vector3d::UnitX());
+          Eigen::Matrix3d test_rot = rot * adjust_rotation_matrix;
+          Eigen::Vector3d test_euler = test_rot.eulerAngles(2, 1, 0);
+          Vector6d test_params;
+          test_params
+              << test_euler[0], test_euler[1], test_euler[2], transation[0], transation[1], transation[2];
+          std::vector<VPnPData> pnp_list;
+          //建立匹配对
+          calibra.buildVPnp(calibra.cams[a], test_params, match_dis,
+                            false, calibra.cams[a].rgb_edge_clouds,
+                            calibra.lidar_edge_clouds, pnp_list);
+
+          int edge_size = calibra.lidar_edge_clouds->size();
+          int pnp_size = pnp_list.size();
+          float cost = ((float) (edge_size - pnp_size) / (float) edge_size);
+#ifdef DEBUG
+          std::cout << "n " << n << " round " << round << " a " << a << " iter "
+                    << iter << " cost:" << cost << std::endl;
+#endif
+          //NOTE:因为，edge_size是不变的，cost越小说明pnp_list数量多,说明pnp配准越好
+          if (cost < min_cost) {
+            std::cout << "cost :" << cost << "; edge size :  " << calibra.lidar_edge_clouds->size()
+                      << "; pnp_list: " << pnp_list.size() << std::endl;
+            min_cost = cost;
+            Eigen::Matrix3d rot;
+            rot = Eigen::AngleAxisd(test_params[0], Eigen::Vector3d::UnitZ()) *
+                Eigen::AngleAxisd(test_params[1], Eigen::Vector3d::UnitY()) *
+                Eigen::AngleAxisd(test_params[2], Eigen::Vector3d::UnitX());
+            //更新参数
+            calibra.cams[a].update_Rt(rot, transation);
+            calibra.buildVPnp(calibra.cams[a], test_params, match_dis,
+                              true, calibra.cams[a].rgb_edge_clouds,
+                              calibra.lidar_edge_clouds, pnp_list);
+          }
+        }
+      }
+    }
+  }
+}
 ```
 <span style="color:red">正在更新中...</span>
 
