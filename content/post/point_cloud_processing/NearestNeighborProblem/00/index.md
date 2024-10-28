@@ -59,11 +59,26 @@ int bfnn_point(CloudPtr cloud, const Vec3f& point) {
     std::vector<size_t> index(cloud2->size());
     std::for_each(index.begin(), index.end(), [idx = 0](size_t& i) mutable { i = idx++; });
     matches.resize(index.size());
+    //参数std::execution::seq表示使用单线程,顺序化的方式执行
     std::for_each(std::execution::seq, index.begin(), index.end(), [&](auto idx) {
         matches[idx].second = idx;
         matches[idx].first = bfnn_point(cloud1, ToVec3f(cloud2->points[idx]));
     });
 }
+//多线程
+void bfnn_cloud_mt(CloudPtr cloud1, CloudPtr cloud2, std::vector<std::pair<size_t, size_t>>& matches) {
+    // 先生成索引
+    std::vector<size_t> index(cloud2->size());
+    std::for_each(index.begin(), index.end(), [idx = 0](size_t& i) mutable { i = idx++; });
+
+    // 并行化for_each
+    matches.resize(index.size());
+    std::for_each(std::execution::par_unseq, index.begin(), index.end(), [&](auto idx) {
+        matches[idx].second = idx;
+        matches[idx].first = bfnn_point(cloud1, ToVec3f(cloud2->points[idx]));
+    });
+}
+
 ```
 ## 参考文献
 [1][《自动驾驶与机器人中的 SLAM技术:从理论到实践》](https://product.dangdang.com/11478791697.html)
