@@ -55,6 +55,222 @@ K-d树的最近邻查找步骤如下：
 (d) 若 $n_c$ 的令一侧不需要展开，则函数返回；否则继续调用另一侧的近邻搜索算法。
 ## 代码实践
 ``` C++
+/// Kd树节点，二叉树结构，内部用祼指针，对外一个root的shared_ptr
+struct KdTreeNode {
+    int id_ = -1;
+    int point_idx_ = 0;            // 点的索引
+    int axis_index_ = 0;           // 分割轴
+    float split_thresh_ = 0.0;     // 分割位置
+    KdTreeNode* left_ = nullptr;   // 左子树
+    KdTreeNode* right_ = nullptr;  // 右子树
+
+    bool IsLeaf() const { return left_ == nullptr && right_ == nullptr; }  // 是否为叶子
+};
+
+/// 用于记录knn结果
+struct NodeAndDistance {
+    NodeAndDistance(KdTreeNode* node, float dis2) : node_(node), distance2_(dis2) {}
+    KdTreeNode* node_ = nullptr;
+    float distance2_ = 0;  // 平方距离，用于比较
+
+    bool operator<(const NodeAndDistance& other) const { return distance2_ < other.distance2_; }
+};
+
+
+
+/**
+ * 计算一个容器内数据的均值与对角形式协方差
+ * @tparam C    容器类型
+ * @tparam D    结果类型
+ * @tparam Getter   获取数据函数, 接收一个容器内数据类型，返回一个D类型
+ */
+template <typename C, typename D, typename Getter>
+void ComputeMeanAndCovDiag(const C& data, D& mean, D& cov_diag, Getter&& getter) {
+    size_t len = data.size();
+    assert(len > 1);
+    // clang-format off
+    //通过getter获取每个索引对应的坐标，并计算均值与协方差
+    mean = std::accumulate(data.begin(), data.end(), D::Zero().eval(),
+                           [&getter](const D& sum, const auto& data) -> D { return sum + getter(data); }) / len;
+    cov_diag = std::accumulate(data.begin(), data.end(), D::Zero().eval(),
+                               [&mean, &getter](const D& sum, const auto& data) -> D {
+                                   return sum + (getter(data) - mean).cwiseAbs2().eval();
+                               }) / (len - 1);
+    // clang-format on
+}
+
+
+
+class KdTree {
+   public:
+    explicit KdTree() = default;
+    ~KdTree() { Clear(); }
+
+    /**
+     * 构建Kd树
+     * @param cloud 点云
+     */
+    bool BuildTree(const CloudPtr& cloud){
+        //初始化点云数据
+           if (cloud->empty()) {
+        return false;
+    }
+
+    cloud_.clear();
+    cloud_.resize(cloud->size());
+    for (size_t i = 0; i < cloud->points.size(); ++i) {
+        cloud_[i] = ToVec3f(cloud->points[i]);
+    }
+    //初始化
+    Clear();
+    Reset();
+
+    IndexVec idx(cloud->size());
+    for (int i = 0; i < cloud->points.size(); ++i) {
+        idx[i] = i;
+    }
+
+    Insert(idx, root_.get());
+    return true; 
+    }
+
+    /// 获取k最近邻
+    bool GetClosestPoint(const PointType& pt, std::vector<int>& closest_idx, int k = 5);
+
+    /// 并行为点云寻找最近邻
+    bool GetClosestPointMT(const CloudPtr& cloud, std::vector<std::pair<size_t, size_t>>& matches, int k = 5);
+
+    /// 这个被用于计算最近邻的倍数
+    void SetEnableANN(bool use_ann = true, float alpha = 0.1) {
+        approximate_ = use_ann;
+        alpha_ = alpha;
+    }
+
+    /// 返回节点数量
+    size_t size() const { return size_; }
+
+    /// 清理数据
+    void Clear();
+
+    /// 打印所有节点信息
+    void PrintAll();
+
+   private:
+    /// kdtree 构建相关
+    /**
+     * 在node处插入点
+     * @param points
+     * @param node
+     */
+    void Insert(const IndexVec& points, KdTreeNode* node){
+            nodes_.insert({node->id_, node});
+
+    if (points.empty()) {
+        return;
+    }
+    if (points.size() == 1) {
+        size_++;
+        node->point_idx_ = points[0];
+        return;
+    }
+    //找到分割轴和阈值
+    //NOTE:如果找不到分割轴，则将第一个点作为叶子节点，返回。这种情况可能是所有点都在一个位置上。
+    IndexVec left, right;
+    if (!FindSplitAxisAndThresh(points, node->axis_index_, node->split_thresh_, left, right)) {
+        size_++;
+        node->point_idx_ = points[0];
+        return;
+    }
+    //递归插入
+    const auto create_if_not_empty = [&node, this](KdTreeNode *&new_node, const IndexVec &index) {
+        if (!index.empty()) {
+            new_node = new KdTreeNode;
+            new_node->id_ = tree_node_id_++;
+            Insert(index, new_node);
+        }
+    };
+
+    create_if_not_empty(node->left_, left);
+    create_if_not_empty(node->right_, right);
+    }
+
+    /**
+     * 计算点集的分割面
+     * @param points 输入点云
+     * @param axis   轴
+     * @param th     阈值
+     * @param left   左子树
+     * @param right  右子树
+     * @return
+     */
+    bool FindSplitAxisAndThresh(const IndexVec& point_idx, int& axis, float& th, IndexVec& left, IndexVec& right){
+        // 计算三个轴上的散布情况，我们使用math_utils.h里的函数
+    Vec3f var;
+    Vec3f mean;
+    math::ComputeMeanAndCovDiag(point_idx, mean, var, [this](int idx) { return cloud_[idx]; });//通过lambda表达式，将索引对应的点传给函数
+    int max_i, max_j;
+    var.maxCoeff(&max_i, &max_j);
+    axis = max_i;//最大协方差轴
+    th = mean[axis]; //阈值
+
+    for (const auto &idx : point_idx) {
+        if (cloud_[idx][axis] < th) {
+            // 中位数可能向左取整
+            left.emplace_back(idx);
+        } else {
+            right.emplace_back(idx);
+        }
+    }
+
+    // 边界情况检查：输入的points等于同一个值，上面的判定是>=号，所以都进了右侧
+    // 这种情况不需要继续展开，直接将当前节点设为叶子就行
+    if (point_idx.size() > 1 && (left.empty() || right.empty())) {
+        return false;
+    }
+
+    return true;
+    }
+
+    void Reset();
+
+    /// 两个点的平方距离
+    static inline float Dis2(const Vec3f& p1, const Vec3f& p2) { return (p1 - p2).squaredNorm(); }
+
+    // Knn 相关
+    /**
+     * 检查给定点在kdtree node上的knn，可以递归调用
+     * @param pt     查询点
+     * @param node   kdtree 节点
+     */
+    void Knn(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& result) const;
+
+    /**
+     * 对叶子节点，计算它和查询点的距离，尝试放入结果中
+     * @param pt    查询点
+     * @param node  Kdtree 节点
+     */
+    void ComputeDisForLeaf(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& result) const;
+
+    /**
+     * 检查node下是否需要展开
+     * @param pt   查询点
+     * @param node Kdtree 节点
+     * @return true if 需要展开
+     */
+    bool NeedExpand(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& knn_result) const;
+
+    int k_ = 5;                                   // knn最近邻数量
+    std::shared_ptr<KdTreeNode> root_ = nullptr;  // 根节点
+    std::vector<Vec3f> cloud_;                    // 输入点云
+    std::unordered_map<int, KdTreeNode*> nodes_;  // for bookkeeping
+
+    size_t size_ = 0;       // 叶子节点数量
+    int tree_node_id_ = 0;  // 为kdtree node 分配id
+
+    // 近似最近邻
+    bool approximate_ = true;
+    float alpha_ = 0.1;
+};
 
 ```
 <span style="color:red;">正在更新中...</span>
