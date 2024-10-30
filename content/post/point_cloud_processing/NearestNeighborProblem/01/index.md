@@ -135,10 +135,52 @@ class KdTree {
     }
 
     /// 获取k最近邻
-    bool GetClosestPoint(const PointType& pt, std::vector<int>& closest_idx, int k = 5);
+    bool GetClosestPoint(const PointType& pt, std::vector<int>& closest_idx, int k = 5){
+         if (k > size_) {
+        LOG(ERROR) << "cannot set k larger than cloud size: " << k << ", " << size_;
+        return false;
+    }
+    k_ = k;
+
+    std::priority_queue<NodeAndDistance> knn_result;
+    Knn(ToVec3f(pt), root_.get(), knn_result);
+
+    // 排序并返回结果
+    closest_idx.resize(knn_result.size());
+    for (int i = closest_idx.size() - 1; i >= 0; --i) {
+        // 倒序插入
+        closest_idx[i] = knn_result.top().node_->point_idx_;
+        knn_result.pop();
+    }
+    return true;
+    }  
 
     /// 并行为点云寻找最近邻
-    bool GetClosestPointMT(const CloudPtr& cloud, std::vector<std::pair<size_t, size_t>>& matches, int k = 5);
+    bool GetClosestPointMT(const CloudPtr& cloud, std::vector<std::pair<size_t, size_t>>& matches, int k = 5){
+         matches.resize(cloud->size() * k);
+
+        // 索引
+        std::vector<int> index(cloud->size());
+        for (int i = 0; i < cloud->points.size(); ++i) {
+            index[i] = i;
+        }
+
+        std::for_each(std::execution::par_unseq, index.begin(), index.end(), [this, &cloud, &matches, &k](int idx) {
+            std::vector<int> closest_idx;
+            GetClosestPoint(cloud->points[idx], closest_idx, k);
+            for (int i = 0; i < k; ++i) {
+                matches[idx * k + i].second = idx;
+                if (i < closest_idx.size()) {
+                    matches[idx * k + i].first = closest_idx[i];
+                } else {
+                    //NOTE: 非法定义 constexpr size_t kINVALID_ID = std::numeric_limits<size_t>::max();
+                    matches[idx * k + i].first = math::kINVALID_ID;
+                }
+            }
+        });
+
+        return true;
+    }
 
     /// 这个被用于计算最近邻的倍数
     void SetEnableANN(bool use_ann = true, float alpha = 0.1) {
@@ -150,10 +192,30 @@ class KdTree {
     size_t size() const { return size_; }
 
     /// 清理数据
-    void Clear();
+    void Clear(){
+        for (const auto &np : nodes_) {
+            if (np.second != root_.get()) {
+                delete np.second;
+            }
+        }
+
+        nodes_.clear();
+        root_ = nullptr;
+        size_ = 0;
+        tree_node_id_ = 0;    
+    }
 
     /// 打印所有节点信息
-    void PrintAll();
+    void PrintAll(){
+        for (const auto &np : nodes_) {
+            auto node = np.second;
+            if (node->left_ == nullptr && node->right_ == nullptr) {
+                LOG(INFO) << "leaf node: " << node->id_ << ", idx: " << node->point_idx_;
+            } else {
+                LOG(INFO) << "node: " << node->id_ << ", axis: " << node->axis_index_ << ", th: " << node->split_thresh_;
+            }
+        }
+    }
 
    private:
     /// kdtree 构建相关
@@ -231,7 +293,12 @@ class KdTree {
     return true;
     }
 
-    void Reset();
+    void Reset(){
+        tree_node_id_ = 0;
+        root_.reset(new KdTreeNode());
+        root_->id_ = tree_node_id_++;
+        size_ = 0;
+    }
 
     /// 两个点的平方距离
     static inline float Dis2(const Vec3f& p1, const Vec3f& p2) { return (p1 - p2).squaredNorm(); }
@@ -242,14 +309,50 @@ class KdTree {
      * @param pt     查询点
      * @param node   kdtree 节点
      */
-    void Knn(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& result) const;
+    void Knn(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& result) const{
+           if (node->IsLeaf()) {
+        // 如果是叶子，检查叶子是否能插入
+        ComputeDisForLeaf(pt, node, knn_result);
+        return;
+    }
+
+    // 看pt落在左还是右，优先搜索pt所在的子树
+    // 然后再看另一侧子树是否需要搜索
+    KdTreeNode *this_side, *that_side;
+    if (pt[node->axis_index_] < node->split_thresh_) {
+        this_side = node->left_;
+        that_side = node->right_;
+    } else {
+        this_side = node->right_;
+        that_side = node->left_;
+    }
+
+    Knn(pt, this_side, knn_result);
+    //判断是否需要展开
+    if (NeedExpand(pt, node, knn_result)) {  // 注意这里是跟自己比
+        Knn(pt, that_side, knn_result);
+    }
+    }
 
     /**
      * 对叶子节点，计算它和查询点的距离，尝试放入结果中
      * @param pt    查询点
      * @param node  Kdtree 节点
      */
-    void ComputeDisForLeaf(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& result) const;
+    void ComputeDisForLeaf(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& result) const{
+            // 比较与结果队列的差异，如果优于最远距离，则插入
+    float dis2 = Dis2(pt, cloud_[node->point_idx_]);
+    if (knn_result.size() < k_) {
+        // results 不足k
+        knn_result.emplace(node, dis2);
+    } else {
+        // results等于k，比较current与max_dis_iter之间的差异
+        if (dis2 < knn_result.top().distance2_) {
+            knn_result.emplace(node, dis2);
+            knn_result.pop();
+        }
+    }
+    }
 
     /**
      * 检查node下是否需要展开
@@ -257,7 +360,29 @@ class KdTree {
      * @param node Kdtree 节点
      * @return true if 需要展开
      */
-    bool NeedExpand(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& knn_result) const;
+    bool NeedExpand(const Vec3f& pt, KdTreeNode* node, std::priority_queue<NodeAndDistance>& knn_result) const{
+            if (knn_result.size() < k_) {
+        return true;
+    }
+    //前面也说过,判断另一侧的是否展开的条件是判断当前找到最小的距离是否小于到分界线的距离，
+    //如果是，则说明另一侧的点肯定是更远的，则不用展开
+    if (approximate_) {
+        float d = pt[node->axis_index_] - node->split_thresh_;
+        if ((d * d) < knn_result.top().distance2_ * alpha_) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        // 检测切面距离，看是否有比现在更小的
+        float d = pt[node->axis_index_] - node->split_thresh_;
+        if ((d * d) < knn_result.top().distance2_) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    }
 
     int k_ = 5;                                   // knn最近邻数量
     std::shared_ptr<KdTreeNode> root_ = nullptr;  // 根节点
@@ -273,7 +398,7 @@ class KdTree {
 };
 
 ```
-<span style="color:red;">正在更新中...</span>
+<span style="color:red;">遗留内容：如何删除K-d树中的一个点，如何对K-d树进行平衡。</span>
 ## 参考文献
 [1][《自动驾驶与机器人中的 SLAM技术:从理论到实践》](https://product.dangdang.com/11478791697.html)
 
