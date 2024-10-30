@@ -398,7 +398,6 @@ class KdTree {
 };
 
 ```
-<span style="color:red;">遗留内容：如何删除K-d树中的一个点，如何对K-d树进行平衡。</span>
 ## 参考文献
 [1][《自动驾驶与机器人中的 SLAM技术:从理论到实践》](https://product.dangdang.com/11478791697.html)
 
