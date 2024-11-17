@@ -110,6 +110,9 @@ $$\lambda_{min}(M)\le \frac{x^{T}Mx}{x^{T}x}\le\lambda_{max}(M),\forall{x}\ne0$$
 =\lambda_{3}(A_{l})\end{align*}$$
 将其带入$$\begin{align*}\arg\min_{{\mathcal{S},\mathcal{E}_{L}}}\sum_{l}{\left(\min_{n_{l},q_{l}}{\frac{1}{N_{l}}{\sum_{k=1}^{N_{l}} \left( n_{l}^{T}\left( {^{G}p_{k}-q_{l}}\right)\right)^{2}}} \right)}\\
 =\arg\min_{{\mathcal{S},\mathcal{E}_{L}}}\sum_{l}{\lambda_{3}(A_{l})}\end{align*}$$
+
+补充内容：由上述图4可知，$n_{l}^{T}({}^{G}p_{k}-q_{l})$表达了点${}^{G}p_{k}$到平面$\pi$的距离，其推导来源于向量法求点到平面的距离。如下图所示：
+![](distance.jpeg)
 #### 推导二：该论文中的推导思路
 <span style="color:red;">后续补充！</span>
 ### 二阶闭式导数的推导
@@ -1055,3 +1058,5 @@ _jact.setZero();
 [4][《A micro Lie theory for state estimation in robotics》](https://arxiv.org/pdf/1812.01537)
 
 [5][《多个LiDAR-Camera无目标跨视角联合标定方法》](https://blog.csdn.net/CV_Autobot/article/details/134173441)
+
+[6][《如何用法向量求点到平面距离_【立体几何】用空间向量求点到面的距离》](https://blog.csdn.net/weixin_36444661/article/details/112768144)
