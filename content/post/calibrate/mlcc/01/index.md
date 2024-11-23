@@ -566,6 +566,8 @@ $$
 $$
 D=\begin{bmatrix}
 -{}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}&I
+\end{bmatrix}=\begin{bmatrix}
+-({}^{G}_{L_0}R_{t_j}p_k)^{\wedge}&I
 \end{bmatrix}\tag{式1}
 $$
 由于$\frac{\delta \lambda}{\delta p}$不变，所以$H$和$J$没有变换将其带入2.2.3章节的式9即可推导出$\bar{J}$和$\bar{H}$。
@@ -573,13 +575,13 @@ $$
 $$
 \begin{align*}
 \bar{H}_{0,0}=D_{0,k}^{T}H_{k,j}D_{j,0}\\
-=\begin{bmatrix}-{}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}&I\end{bmatrix}^{T}H_{k,j}\begin{bmatrix}-{}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}&I\end{bmatrix}\\
-=\begin{bmatrix} {}^{G}_{L_0}R_{t_j}(p_k)^{\wedge} \\I\end{bmatrix}H_{k,j}\begin{bmatrix}-{}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}&I\end{bmatrix}\\
+=\begin{bmatrix}-({}^{G}_{L_0}R_{t_j}p_k)^{\wedge}&I\end{bmatrix}^{T}H_{k,j}\begin{bmatrix}-({}^{G}_{L_0}R_{t_j}p_j)^{\wedge}&I\end{bmatrix}\\
+=\begin{bmatrix}( {}^{G}_{L_0}R_{t_j}p_k)^{\wedge} \\I\end{bmatrix}H_{k,j}\begin{bmatrix}-({}^{G}_{L_0}R_{t_j}p_j)^{\wedge}&I\end{bmatrix}\\
+=\begin{bmatrix}(
+{}^{G}_{L_0}R_{t_j}p_k)^{\wedge}H_{k,j}\\H_{k,j}\end{bmatrix}\begin{bmatrix}-({}^{G}_{L_0}R_{t_j}p_j)^{\wedge}&I\end{bmatrix}\\
 =\begin{bmatrix}
-{}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}H_{k,j}\\H_{k,j}\end{bmatrix}\begin{bmatrix}-{}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}&I\end{bmatrix}\\
-=\begin{bmatrix}
--{}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}H_{k,j}{}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}&{}^{G}_{L_0}R_{t_j}(p_k)^{\wedge}H_{k,j}\\
--H_{k,j} {}^{G}_{L_0}R_{t_j}(p_j)^{\wedge}& H_{k,j} 
+-({}^{G}_{L_0}R_{t_j}p_k)^{\wedge}H_{k,j}({}^{G}_{L_0}R_{t_j}p_j)^{\wedge}&({}^{G}_{L_0}R_{t_j}p_k)^{\wedge}H_{k,j}\\
+-H_{k,j} ({}^{G}_{L_0}R_{t_j}p_j)^{\wedge}& H_{k,j} 
 \end{bmatrix}
 \end{align*}\tag{式2}
 $$
