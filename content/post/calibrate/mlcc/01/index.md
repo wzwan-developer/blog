@@ -702,16 +702,7 @@ $$
                     else
                         Hessian33 -= 1.0 / N * ukukT;
                     Hessian33 = 2.0 / N * Hessian33;
-                    //到此完整的公式16，下文为$D^{T}HD$，是$\bar{H}$，见3.1章节的公式2
-                    //[-R(p_k)^{wedge} I]^{T} H_33 [-R(p_j)^{wedge} I]
-                    //= [(-R(p_k)^{wedge})^{T}   H_33 [-R(p_j)^{wedge} I]
-                    //   I^{T]
-                    //=[R(p_k)^{wedge}H_33 [-R(p_j)^{wedge} I]
-                    //  I]
-                    //=[R(p_k)^{wedge}H_33  [-R(p_j)^{wedge} I]
-                    // H_33]
-                    //= [-R(p_k)^{wedge} H_33 R(p_j)^{wedge}  R(p_k)^{wedge}H_33
-                    // -H_33R(p_j)^{wedge}         
+                    //到此完整的公式16，下文为$D^{T}HD$，是$\bar{H}$，见3.1章节的公式2     
                     _hess.block<3, 3>(rownum + 3, colnum + 3) += Hessian33;
                     h33 = Hessian33 * point_xis[j];
                     _hess.block<3, 3>(rownum + 3, colnum) += h33;
