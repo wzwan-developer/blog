@@ -420,32 +420,32 @@ $$
 +{}_{L_{0}}^{G}{t}_{t_{j}}+\delta_{L_{0}}^{G}{t}_{t_{j}}\\
 \approx{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R\cdot{p_{k}}
 +{}_{L_{0}}^{G}{t}_{t_{j}}\big)+{}_{L_{0}}^{G}{t}_{t_{j}}
-+{}_{L_{0}}^{G}R_{t_{j}}\big(I\cdot{}_{L_{i}}^{L_{0}}\phi^{\wedge}p_{k}
++{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R\cdot{}_{L_{i}}^{L_{0}}\phi^{\wedge}p_{k}
 +\delta_{L_{i}}^{L_{0}}{t}\big)\\
 +{}_{L_{0}}^{G}R_{t_{j}}{}_{L_{0}}^{G}\phi_{t_{j}}^{\wedge}
 \bigg({}_{L_{i}}^{L_{0}}Rp_{k}
 +{}_{L_{i}}^{L_{0}}{t}\bigg)+\delta_{L_{0}}^{G}{t}_{t_{j}}\\
 \approx{}_{L_{0}}^{G}R_{t_{j}}\big({}_{L_{i}}^{L_{0}}R\cdot{p_{k}}
 +{}_{L_{0}}^{G}{t}_{t_{j}}\big)+{}_{L_{0}}^{G}{t}_{t_{j}}\\
--{}_{L_0}^GR_{t_j}\left(p_k\right)^{\wedge}\cdot_{L_i}^{L_0}\phi+_{L_0}^GR_{t_j}\delta_{L_i}^{L_0}t
+-{}_{L_0}^GR_{t_j}{}_{L_{i}}^{L_{0}}R\left(p_k\right)^{\wedge}\cdot_{L_i}^{L_0}\phi+_{L_0}^GR_{t_j}\delta_{L_i}^{L_0}t
 -{}_{L_{0}}^{G}R_{t_{j}}\bigg({}_{L_{i}}^{L_{0}}Rp_{k}
 +{}_{L_{i}}^{L_{0}}{t}\bigg)^{\wedge}{}_{L_{0}}^{G}\phi_{t_{j}}+\delta_{L_{0}}^{G}{t}_{t_{j}}
 \end{align*}
 \tag{式6}
 $$
-上式中第四步的${}_{L_{i}}^{L_{0}}R$被近似为$I$,结合式4和式6可得$\delta{^Gp_k}$，如下所示：
+结合式4和式6可得$\delta{^Gp_k}$，如下所示：
 $$
 \begin{align*}
 \delta^{G}{p}_{k}\approx-{}_{L_{0}}^{G}R_{t_{j}}
 \big({}_{L_{i}}^{L_{0}}{R}{p}_{k}+{}_{L_{i}}^{L_{0}}{t}\big)^{\wedge}{}_{L_{0}}^{G}\phi_{t_{j}}
-+\delta_{L_{0}}^{G}{t}_{t_{j}}-\\{}_{L_{0}}^{G}R_{t_{j}}\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
++\delta_{L_{0}}^{G}{t}_{t_{j}}-\\{}_{L_{0}}^{G}R_{t_{j}}{}_{L_{i}}^{L_{0}}R\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
 +{}_{L_{0}}^{G}{R}_{t_{j}}\delta_{L_{i}}^{L_{0}}{t}\\
 =D\cdot \delta x ,
 \end{align*}
 \tag{式7}
 $$
 其中$\delta{x}=\begin{bmatrix}\cdots \quad {^G_{L_0}\phi_{t_j}^{T}\quad\delta_{L_0}^{G}t_{t_j}^T}\cdots{^{L_{0}}_{L_i}\phi^{T}\quad\delta_{L_i}^{L_0}t^T} \cdots\end{bmatrix}^{T}
-\ne\mathbb{R}^{6\left(m+n-2\right)}$是优化变量$x=\begin{bmatrix}\cdots{_{L_0}^GR_{t_j} }\quad{_{L_0}^{G}t_{t_j}}\cdots{_{L_0}^{L_i}R}\quad{_{L_0}^{L_i}t}\cdots\end{bmatrix}$的微小扰动。
+\ne\mathbb{R}^{6\left(m+n-2\right)}$是优化变量$x=\begin{bmatrix}\cdots{_{L_0}^GR_{t_j} }\quad{_{L_0}^{G}t_{t_j}}\cdots{_{L_i}^{L_0}R}\quad{_{L_i}^{L_0}t}\cdots\end{bmatrix}$的微小扰,$m$代表帧数，n代表参考雷达的个数。
 
 并且
 $$\begin{align*}
@@ -457,7 +457,7 @@ D =\begin{bmatrix}\vdots&\vdots\\\cdots {D}_{k,p}^{\mathcal{S}}&\cdots {D}_{k,q}
 \end{cases}\\
 \mathrm{D}_{k,q}^{\mathcal{E}_{L}} 
 \begin{cases}
-\begin{bmatrix}{-{}_{L_{0}}^{G}{R}_{t_{j}}}({}_{L_{i}}^{L_{0}}{R}{p}_{k})^{\wedge}&{}_{L_{0}}^{G}{R}_{t_{j}}\end{bmatrix},\quad{\mathrm{if~}q=i}\\
+\begin{bmatrix}{-{}_{L_{0}}^{G}{R}_{t_{j}}}{}_{L_{i}}^{L_{0}}{R}({p}_{k})^{\wedge}&{}_{L_{0}}^{G}{R}_{t_{j}}\end{bmatrix},\quad{\mathrm{if~}q=i}\\
 {0}_{3\times6},\quad {else}
 \end{cases}
 \end{align*}
@@ -465,7 +465,7 @@ $$
 *<span style="color:red">注意：</span>* 论文中的结果与推导有差异，下面是论文给的结果，<span style="color:blue;">待排查！</span>
 $$\delta^{G}{p}_{k}\approx{\color{red}+}{}_{L_{0}}^{G}R_{t_{j}}
 \big({}_{L_{i}}^{L_{0}}{R}{p}_{k}+{}_{L_{i}}^{L_{0}}{t}\big)^{\wedge}{}_{L_{0}}^{G}\phi_{t_{j}}
-+\delta_{L_{0}}^{G}{t}_{t_{j}}{\color{red}+}\\{}_{L_{\color{red}i}}^{G}R_{t_{j}}\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
++\delta_{L_{0}}^{G}{t}_{t_{j}}{\color{red}+}\\{}_{L_{i}}^{G}R_{t_{j}}\big({p}_{k}\big)^{\wedge}{}_{L_{i}}^{L_{0}}\phi
 +{}_{L_{0}}^{G}{R}_{t_{j}}\delta_{L_{i}}^{L_{0}}{t}$$
 
 上面用到一些近似化：
