@@ -457,7 +457,7 @@ D =\begin{bmatrix}\vdots&\vdots\\\cdots {D}_{k,p}^{\mathcal{S}}&\cdots {D}_{k,q}
 \end{cases}\\
 \mathrm{D}_{k,q}^{\mathcal{E}_{L}} 
 \begin{cases}
-\begin{bmatrix}{-{}_{L_{0}}^{G}{R}_{t_{j}}}{}_{L_{i}}^{L_{0}}{R}({p}_{k})^{\wedge}&{}_{L_{0}}^{G}{R}_{t_{j}}\end{bmatrix},\quad{\mathrm{if~}q=i}\\
+\begin{bmatrix}{-{}_{L_{0}}^{G}{R}_{t_{j}}}({}_{L_{i}}^{L_{0}}{R}{p}_{k})^{\wedge}&{}_{L_{0}}^{G}{R}_{t_{j}}\end{bmatrix},\quad{\mathrm{if~}q=i}\\
 {0}_{3\times6},\quad {else}
 \end{cases}
 \end{align*}
