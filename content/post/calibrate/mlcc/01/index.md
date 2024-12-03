@@ -6,7 +6,6 @@ image: dense_map.jpg
 math: true
 slug: mlcc/01
 license: 
-hidden: false
 comments: true
 categories:
 - Calibrate
