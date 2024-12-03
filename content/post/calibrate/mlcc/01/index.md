@@ -6,6 +6,7 @@ image: dense_map.jpg
 math: true
 slug: mlcc/01
 license: 
+hidden: false
 comments: true
 categories:
 - Calibrate
@@ -13,6 +14,7 @@ tags:
 - mlcc
 ---
 ## 文章内容
+
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With adaptive voxelization, we can obtain a set 
 of voxels of different sizes. Each voxel contains points that are roughly on a plane and creates a planar constraint for 
 all LiDAR poses that  have points in this voxel. More specifically, considering the $l-th$ voxel consisting of a group of
@@ -518,7 +520,141 @@ $$
 \end{bmatrix}
 \end{align*}\tag{式2}
 $$
+``` C++
+/**
+     * 计算Hessian矩阵、转置的Jacobian矩阵和残差
+     *
+     * 该函数是优化算法的一部分，用于计算给定姿势、平移和初始Hessian矩阵、
+     * Jacobian向量以及残差的更新值。它是基于输入数据执行迭代计算的关键步骤。
+     *
+     * @param poses 姿态向量，表示每个窗口的旋转
+     * @param ts 平移向量，表示每个窗口的平移
+     * @param Hess Hessian矩阵，用于二阶优化方法
+     * @param JacT 转置的Jacobian矩阵，优化过程中的线性逼近
+     * @param residual 残差，衡量当前优化状态的误差
+     */
+    void calculate_HJ(vector_quad &poses, vector_vec3d &ts, Eigen::MatrixXd &Hess,
+                      Eigen::VectorXd &JacT, double &residual) {
+        // 初始化Hessian矩阵、转置的Jacobian矩阵和残差
+        Hess.setZero();
+        JacT.setZero();
+        residual = 0;
 
+        // 创建本地副本以避免重复计算
+        Eigen::MatrixXd _hess(Hess);
+        Eigen::MatrixXd _jact(JacT);
+
+        // 获取体素的数量
+        size_t voxel_size = origin_points.size();
+
+        // 遍历每个体素
+        for (size_t i = 0; i < voxel_size; i++) {
+            // 获取当前体素的原始点和窗口数量
+            vector_vec3d &origin_pts = *origin_points[i];
+            std::vector<int> &win_num = *window_nums[i];
+            size_t pts_size = origin_pts.size();
+
+            // 初始化变量
+            Eigen::Vector3d vec_tran;
+            vector_vec3d pt_trans(pts_size);
+            std::vector<Eigen::Matrix3d> point_xis(pts_size);
+            Eigen::Vector3d centor(Eigen::Vector3d::Zero());
+            Eigen::Matrix3d covMat(Eigen::Matrix3d::Zero());
+
+            // 遍历当前体素的所有点
+            for (size_t j = 0; j < pts_size; j++) {
+                // 计算变换后的向量
+                vec_tran = poses[win_num[j]] * origin_pts[j];
+                // 计算并存储点的变换和反对称矩阵
+                point_xis[j] = -wedge(vec_tran);
+                pt_trans[j] = vec_tran + ts[win_num[j]];
+
+                // 更新中心点和协方差矩阵
+                centor += pt_trans[j];
+                covMat += pt_trans[j] * pt_trans[j].transpose();
+            }
+
+            // 计算协方差矩阵的平均值
+            double N = pts_size;
+            covMat = (covMat - centor * centor.transpose() / N) / N;
+            centor = centor / N;
+
+            // 计算协方差矩阵的特征值和特征向量
+            Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(covMat);
+            Eigen::Vector3d eigen_value = saes.eigenvalues();
+            Eigen::Matrix3d U = saes.eigenvectors();
+            Eigen::Vector3d u[3];
+            for (int j = 0; j < 3; j++)
+                u[j] = U.block<3, 1>(0, j);
+
+            // 更新Jacobian矩阵
+            //损失函数降维之后优化的目标函数转为$\arg min_{\mathcal{S}，\mathcal{E}_L}\sum_{l}\lambda_{3}{(A_l)}$
+            //其中$\lambda_3$是矩阵A的最小特征值，u0即为最小特征值
+            Eigen::Matrix3d ukukT = u[0] * u[0].transpose();
+            Eigen::Vector3d vec_Jt;
+            for (size_t j = 0; j < pts_size; j++) {//雅可比矩阵J和D的乘积的转置，见推导过程章节的式9
+                pt_trans[j] = pt_trans[j] - centor;
+                vec_Jt = 2.0 / N * ukukT * pt_trans[j];
+                _jact.block<3, 1>(6 * win_num[j], 0) -= point_xis[j] * vec_Jt;
+                _jact.block<3, 1>(6 * win_num[j] + 3, 0) += vec_Jt;
+            }
+
+            // 计算Hessian矩阵的辅助变量
+            Eigen::Matrix3d Hessian33;
+            Eigen::Matrix3d F;
+            std::vector<Eigen::Matrix3d> F_(3);
+            for (size_t j = 0; j < 3; j++) {
+                if (j == 0) {//定理2：公式10 $F_{m,n}^{p_j}$ n=0,m=0的情况
+                    F_[j].setZero();
+                    continue;
+                }
+                Hessian33 = u[j] * u[0].transpose();
+                //定理2：公式10 $F_{m,n}^{p_j}$ n=0,m!=0的情况
+                //注意此辅助函数缺乏$(p_i-\bar{p})^T$，下面的公式会有补充
+                F_[j] = 1.0 / N / (eigen_value[0] - eigen_value[j]) *
+                        (Hessian33 + Hessian33.transpose());
+            }
+
+            // 更新Hessian矩阵
+            Eigen::Matrix3d h33;
+            size_t rownum, colnum;
+            for (size_t j = 0; j < pts_size; j++) {
+                for (int f = 0; f < 3; f++)
+                    //此时是完整的辅助变量F
+                    F.block<1, 3>(f, 0) = pt_trans[j].transpose() * F_[f];
+
+                F = U * F;
+                //按照定义D的子项为3行6列，位置为k行j列。
+                colnum = 6 * win_num[j];
+                for (size_t k = 0; k < pts_size; k++) {
+                    //注意$u_{k}^{T}\cdot{\left(p_i-\bar{p}\right)}$是一个标量，所以可以挪到F前面，与文中公式16推导略有差异
+                    Hessian33 = u[0] * (pt_trans[k]).transpose() * F +
+                                u[0].dot(pt_trans[k]) * F;
+
+                    rownum = 6 * win_num[k];
+                    if (k == j)
+                        Hessian33 += (N - 1) / N * ukukT;
+                    else
+                        Hessian33 -= 1.0 / N * ukukT;
+                    Hessian33 = 2.0 / N * Hessian33;
+                    //到此完整的公式16，下文为$D^{T}HD$，是$\bar{H}$，见3.1章节的公式2     
+                    _hess.block<3, 3>(rownum + 3, colnum + 3) += Hessian33;
+                    h33 = Hessian33 * point_xis[j];
+                    _hess.block<3, 3>(rownum + 3, colnum) += h33;
+                    _hess.block<3, 3>(rownum, colnum + 3) -= point_xis[k] * Hessian33;
+                    _hess.block<3, 3>(rownum, colnum) -= point_xis[k] * h33;
+                }
+            }
+
+            // 更新残差
+            residual += eigen_value[0];
+            Hess += _hess;
+            JacT += _jact;
+            _hess.setZero();
+            _jact.setZero();
+        }
+    }
+```
 ### 二阶段：优化副雷达到主雷达的外参
 将一阶段中优化出的主雷达里程计作为真值，对于每一个副雷达，使用主雷达里程计以及各副雷达到主雷达的外参将各个副雷达的点云投影回世界坐标系构成局部地图，并和一阶段中的地图叠在一起构成新的局部地图。和一阶段相同，对使用自适应体素化方法提取面特征，并对于每一个特征体素递归构建基于点面误差的一致性评价指标。
 
@@ -635,6 +771,210 @@ $$
 \end{bmatrix}\cdot{J}^{T}
 \end{align*}\tag{式3}
 $$
+``` C++
+//以下代码选自第三阶段的计算雅可比和海森矩阵的代码
+/**
+* @brief 计算雅可比矩阵和海森矩阵并进行更新，推导过程见2.2.3章节
+* @param poses 基准雷达的轨迹的旋转变量
+* @param ts 基准雷达的轨迹的平移变量
+* @param refQs 参考雷达的轨迹的旋转变量
+* @param refTs 参考雷达的轨迹的旋转变量
+* @param head 起始帧（所有体素被拆分为多份，多线程计算）
+* @param end  结束帧
+* @param Hess Hessian矩阵
+* @param JacT Jacobian矩阵
+* @param residual 残差
+*/
+void calculate_HJ(vector_quad &poses, vector_vec3d &ts,
+                vector_quad &refQs, vector_vec3d &refTs,
+                int head, int end, Eigen::MatrixXd &Hess, Eigen::VectorXd &JacT,
+                double &residual) {
+  Hess.setZero();
+  JacT.setZero();
+  residual = 0;
+  Eigen::MatrixXd _jact(JacT);
+
+  for (int i = head; i < end; i++) {
+      vector_vec3d &baseorigin_pts = *baseOriginPts[i];
+      std::vector<int> &basewin_num = *baseWinNums[i];
+      size_t basepts_size = baseorigin_pts.size();
+
+      size_t refpts_size_all = 0;
+      std::vector<int> refpts_size, refpts_size_part;
+      refpts_size.reserve(ref_size);
+      refpts_size_part.reserve(ref_size + 1);
+      refpts_size_part.emplace_back(0);
+      //计算所有点的个数
+      for (int j = 0; j < ref_size; j++) {//ref_size代表参考雷达的个数
+          vector_vec3d &reforigin_pts = *refOriginPts[j][i];
+          refpts_size.emplace_back(reforigin_pts.size());
+          refpts_size_all += reforigin_pts.size();
+          int temp = 0;
+          for (int k = 0; k <= j; k++)
+              temp += refOriginPts[k][i]->size();
+          refpts_size_part.emplace_back(temp);
+      }
+      //计参考雷达+基准雷达点的个数
+      double N = refpts_size_all + basepts_size;
+      int _N = (int) N;
+      //定义$D$和$H$
+      Eigen::MatrixXd _H(3 * _N, 3 * _N);
+      _H.setZero();
+      Eigen::MatrixXd _D(3 * _N, jacob_len);
+      _D.setZero();
+
+      Eigen::Vector3d vec_tran;
+      vector_vec3d pt_trans(basepts_size + refpts_size_all);
+      std::vector<Eigen::Matrix3d> point_xis(basepts_size + refpts_size_all);
+      std::vector<Eigen::Matrix3d> point_xic(basepts_size + refpts_size_all);
+      Eigen::Vector3d center(Eigen::Vector3d::Zero());
+      Eigen::Matrix3d covMat(Eigen::Matrix3d::Zero());
+
+      //计算基准雷达的协方差矩阵
+      for (size_t j = 0; j < basepts_size; j++) {
+          vec_tran = poses[basewin_num[j]] * baseorigin_pts[j];
+          point_xis[j] = -wedge(vec_tran);
+          pt_trans[j] = vec_tran + ts[basewin_num[j]];
+          //基准雷达点云转化到世界坐标系下的坐标
+          center += pt_trans[j];
+          covMat += pt_trans[j] * pt_trans[j].transpose();
+      }
+      //计算参考雷达的协方差矩阵
+      size_t cnt = 0;
+      for (int k = 0; k < ref_size; k++) {
+          vector_vec3d &reforigin_pts = *refOriginPts[k][i];
+          std::vector<int> &refwin_num = *refWinNums[k][i];
+          for (size_t j = 0; j < reforigin_pts.size(); j++) {
+              vec_tran = poses[refwin_num[j]] * (refQs[k] * reforigin_pts[j] + refTs[k]);
+              point_xis[cnt + basepts_size] = -wedge(vec_tran);
+              pt_trans[cnt + basepts_size] = vec_tran + ts[refwin_num[j]];
+              //参考雷达的点云转化到世界坐标系下的坐标
+              center += pt_trans[cnt + basepts_size];
+              covMat += pt_trans[cnt + basepts_size] * pt_trans[cnt + basepts_size].transpose();
+              cnt++;
+          }
+      }
+// 初始化计数器和点的变换
+cnt = 0;
+for (size_t j = 0; j < basepts_size; j++)
+    point_xic[j] = Eigen::MatrixXd::Zero(3, 3);
+for (int k = 0; k < ref_size; k++) {
+    vector_vec3d &reforigin_pts = *refOriginPts[k][i];
+    for (size_t j = 0; j < reforigin_pts.size(); j++) {
+        vec_tran = refQs[k] * reforigin_pts[j];
+        point_xic[cnt + basepts_size] = -wedge(vec_tran);
+        cnt++;
+    }
+}
+// 计算协方差矩阵和中心点
+covMat = covMat - center * center.transpose() / N;
+covMat = covMat / N;
+center = center / N;
+
+// 计算协方差矩阵的特征值和特征向量
+Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> saes(covMat);
+Eigen::Vector3d eigen_value = saes.eigenvalues();
+
+Eigen::Matrix3d U = saes.eigenvectors();
+Eigen::Vector3d u[3];
+for (int j = 0; j < 3; j++)
+    u[j] = U.block<3, 1>(0, j);
+
+// 更新雅可比矩阵
+Eigen::Matrix3d ukukT = u[0] * u[0].transpose();
+Eigen::Vector3d vec_Jt;
+//基准雷达点云的影响
+for (size_t j = 0; j < basepts_size; j++) {
+    pt_trans[j] = pt_trans[j] - center;
+    //计算文中的$J$
+    vec_Jt = 2.0 / N * ukukT * pt_trans[j];
+       //计算基准雷达轨迹的$\bar J$
+    _jact.block<3, 1>(6 * basewin_num[j], 0) -= point_xis[j] * vec_Jt;
+    _jact.block<3, 1>(6 * basewin_num[j] + 3, 0) += vec_Jt;
+}
+//参考雷达点云的影响
+cnt = 0;
+for (int k = 0; k < ref_size; k++) {
+    vector_vec3d &reforigin_pts = *refOriginPts[k][i];
+    std::vector<int> &refwin_num = *refWinNums[k][i];
+    for (size_t j = 0; j < reforigin_pts.size(); j++) {
+        pt_trans[cnt + basepts_size] = pt_trans[cnt + basepts_size] - center;
+        vec_Jt = 2.0 / N * ukukT * pt_trans[cnt + basepts_size];
+        //公式中p=j的部分,见文中公式2
+        _jact.block<3, 1>(6 * refwin_num[j], 0) -= point_xis[cnt + basepts_size] * vec_Jt;
+        _jact.block<3, 1>(6 * refwin_num[j] + 3, 0) += vec_Jt;
+        //公式中q=i的部分,见文中公式3
+        _jact.block<3, 1>(6 * pose_size + 6 * k, 0) -= point_xic[cnt + basepts_size] *
+                                                       poses[refwin_num[j]].toRotationMatrix().transpose() *
+                                                       vec_Jt;
+        _jact.block<3, 1>(6 * pose_size + 3 + 6 * k, 0) +=
+                poses[refwin_num[j]].toRotationMatrix().transpose() * vec_Jt;
+        cnt++;
+    }
+}
+assert(cnt == refpts_size_all);
+
+// 计算Hessian矩阵
+Eigen::Matrix3d Hessian33;
+Eigen::Matrix3d F;
+std::vector<Eigen::Matrix3d> F_(3);
+for (size_t j = 0; j < 3; j++) {
+    if (j == 0) {
+        F_[j].setZero();
+        continue;
+    }
+    Hessian33 = u[j] * u[0].transpose();
+    F_[j] = 1.0 / N / (eigen_value[0] - eigen_value[j]) *
+            (Hessian33 + Hessian33.transpose());
+}
+
+size_t colnum_s;
+
+// 计算Hessian矩阵和雅可比矩阵的乘积
+for (size_t j = 0; j < N; j++) {
+    for (int f = 0; f < 3; f++)
+        F.block<1, 3>(f, 0) = pt_trans[j].transpose() * F_[f];
+    F = U * F;
+
+    for (size_t k = 0; k < N; k++) {
+        Hessian33 = u[0] * (pt_trans[k]).transpose() * F + u[0].dot(pt_trans[k]) * F;
+        if (k == j)
+            Hessian33 += (N - 1) / N * ukukT;
+        else
+            Hessian33 -= 1.0 / N * ukukT;
+
+        Hessian33 = 2.0 / N * Hessian33;
+        _H.block<3, 3>(3 * k, 3 * j) = Hessian33;
+    }
+
+    if (j < basepts_size) {//基准雷达轨迹的D
+        colnum_s = 6 * basewin_num[j];
+        _D.block<3, 3>(3 * j, colnum_s) = point_xis[j];
+        _D.block<3, 3>(3 * j, colnum_s + 3) = Eigen::MatrixXd::Identity(3, 3);
+    } else {
+        int base_pose;
+        for (int a = 0; a < ref_size; a++)
+            if (j - basepts_size < refpts_size_part[a + 1]) {
+                //注意与前面几个阶段求hessian矩阵有差异，这里仅表达了完整的D,而非\bar{H}，所以这里不用进行D^{T}HD的求解
+                std::vector<int> &refwin_num = *refWinNums[a][i];
+                colnum_s = 6 * refwin_num[j - basepts_size - refpts_size_part[a]];
+                base_pose = refwin_num[j - basepts_size - refpts_size_part[a]];
+                _D.block<3, 3>(3 * j, colnum_s) = point_xis[j];
+                _D.block<3, 3>(3 * j, colnum_s + 3) = Eigen::MatrixXd::Identity(3, 3);
+                colnum_s = 6 * (pose_size + a);
+                _D.block<3, 3>(3 * j, colnum_s) = poses[base_pose] * point_xic[j];
+                _D.block<3, 3>(3 * j, colnum_s + 3) = poses[base_pose].toRotationMatrix();
+                break;
+            }
+    }
+}
+
+// 更新残差和Hessian矩阵
+residual += eigen_value[0];
+Hess += _D.transpose() * _H * _D;
+JacT += _jact;
+_jact.setZero();
+```
 
 ## 参考文献
 [1][《Targetless Extrinsic Calibration of Multiple Small FoV LiDARs and Cameras using Adaptive Voxelization》](https://arxiv.org/pdf/2109.06550)
