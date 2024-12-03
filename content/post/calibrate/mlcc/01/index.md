@@ -13,7 +13,6 @@ tags:
 - mlcc
 ---
 ## 文章内容
-
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;With adaptive voxelization, we can obtain a set 
 of voxels of different sizes. Each voxel contains points that are roughly on a plane and creates a planar constraint for 
 all LiDAR poses that  have points in this voxel. More specifically, considering the $l-th$ voxel consisting of a group of
