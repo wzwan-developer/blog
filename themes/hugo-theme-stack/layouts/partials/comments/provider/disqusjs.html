@@ -2,7 +2,7 @@
 {{- $disqusjs := .Site.Params.Comments.disqusjs -}}
 {{- if and (not $pc.Disable) (and $disqusjs.Shortname $disqusjs.ApiKey) -}}
 
-{{- $style := resources.Get "scss/partials/comments/disqusjs.scss" | resources.ToCSS | minify -}}
+{{- $style := resources.Get "scss/partials/comments/disqusjs.scss" | css.Sass | minify -}}
 <link rel="stylesheet" href="{{ $style.RelPermalink }}">
 
 <div class="disqus-container">
@@ -12,11 +12,11 @@
         function loadDisqusJS() {
             disqusjs = new DisqusJS({
                 shortname: {{ $disqusjs.Shortname }},
-                siteName: {{ .Site.Title }},
-                apikey: {{ $disqusjs.ApiKey }},
-                {{ with $disqusjs.ApiUrl }}api: {{ . }},{{ end }}
-                {{ with $disqusjs.Admin }}admin: {{ . }},{{ end }}
-                {{ with $disqusjs.AdminLabel }}adminLabel: {{ . }}{{ end }}
+        siteName: { { .Site.Title } },
+        apikey: { { $disqusjs.ApiKey } },
+        { { with $disqusjs.ApiUrl } } api: { { .} }, { { end } }
+        { { with $disqusjs.Admin } } admin: { { .} }, { { end } }
+        { { with $disqusjs.AdminLabel } } adminLabel: { { .} } { { end } }
             });
         }
 
@@ -45,7 +45,7 @@
         let supportsIntersectionObserver = runningOnBrowser && "IntersectionObserver" in window;
 
         if (!isBot && supportsIntersectionObserver) {
-            let disqus_observer = new IntersectionObserver(function(entries) {
+            let disqus_observer = new IntersectionObserver(function (entries) {
                 if (entries[0].isIntersecting) {
                     lazyLoadDisqusJS();
                     disqus_observer.disconnect();
@@ -56,6 +56,7 @@
             lazyLoadDisqusJS();
         }
     </script>
-    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by
+            Disqus.</a></noscript>
 </div>
 {{- end -}}
