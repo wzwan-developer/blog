@@ -41,21 +41,54 @@ categories:
 >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Lemma: Let $A$ and $B$ be $m \times  n$ matrices, and $R$ an $m \times m$ rotation matrix,and $UDV^T$ a singular value decomposition of $AB^T$ $(UU^T =VV^T=I,D=diag(d_i),d_1\ge d_2\ge …\ge d_m \ge 0)$.
 Then the minimum value of  ${\left \| A-RB \right \|^2}$ with respect to $R$ is $$\min_R\left\|A-RB\right\|^2=\left\|A\right\|^2+\left\|B\right\|^2-2\mathrm{tr}(DS)\tag{2}$$ where $$S=\left\{
 \begin{array}
-{ll}I & \quad\mathrm{if~}\det(AB^T)\geq0 \\
-\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if~}\det(AB^T)<0.
-\end{array}\right.\tag{3}$$ When $rank(AB^T) \ge  m - 1$, the optimum rotation matrix $R$ which achieves the above minimum value is uniquely determined.$$R=USV^T\tag{4}$$
+{ll}I & \quad\mathrm{if~}\mathrm{det}(AB^T)\geq0 \\
+\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if~}\mathrm{det}(AB^T)<0.
+\end{array}\right.\tag{3}$$ When $\mathrm{rank}(AB^T) \ge  m - 1$, the optimum rotation matrix $R$ which achieves the above minimum value is uniquely determined.$$R=USV^T\tag{4}$$
 where $S$ in (4) must be chosen as$$S=\left\{
 \begin{array}
-{ll}I & \quad\mathrm{if}\quad\det(U)\det(V)=1 \\
-\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if}\quad\det(U)\det(V)=-1
-\end{array}\right.\tag{5}$$when $det (AB^T) = 0 (rank(AB^T) = m - 1)$.
+{ll}I & \quad\mathrm{if}\quad\mathrm{det}(U)\mathrm{det}(V)=1 \\
+\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if}\quad\mathrm{det}(U)\mathrm{det}(V)=-1
+\end{array}\right.\tag{5}$$when $\mathrm{det}(AB^T) = 0 (\mathrm{rank}(AB^T) = m - 1)$.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;设$A$和$B$为$m\times n$矩阵，$R$为$m\times m$的旋转矩阵，$UDV^T$为$AB^T$的奇异值分解$(UU^T=VV^T=I,D=diag(d_i),d_1\ge d_2\ge …\ge d_m \ge 0)$。那么对于$R$的最小值${\left \| A-RB \right \|^2}$，最小值是 $$\min_R\left\|A-RB\right\|^2=\left\|A\right\|^2+\left\|B\right\|^2-2\mathrm{tr}(DS)\tag{2}$$ 其中 $$S=\left\{
 \begin{array}
-{ll}I & \quad\mathrm{if~}\det(AB^T)\geq0 \\
-\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if~}\det(AB^T)<0.
-\end{array}\right.\tag{3}$$ 当$rank(AB^T)\ge m-1$时，达到上述最小值的最优旋转矩阵$R$被唯一确定为$$R=USV^T\tag{4}$$,当$det(AB^T)=0(rank(AB^T)=m-1)$时，$S$ 在 (4) 中需要选择为 $$S=\left\{
+{ll}I & \quad\mathrm{if~}\mathrm{det}(AB^T)\geq0 \\
+\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if~}\mathrm{det}(AB^T)<0.
+\end{array}\right.\tag{3}$$ 当$\mathrm{rank}(AB^T)\ge m-1$时，达到上述最小值的最优旋转矩阵$R$被唯一确定为$$R=USV^T\tag{4}$$,当$\mathrm{det}(AB^T)=0(\mathrm{rank}(AB^T)=m-1)$时，$S$ 在 (4) 中需要选择为 $$S=\left\{
 \begin{array}
-{ll}I & \quad\mathrm{if}\quad\det(U)\det(V)=1 \\
-\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if}\quad\det(U)\det(V)=-1
+{ll}I & \quad\mathrm{if}\quad\mathrm{det}(U)\mathrm{det}(V)=1 \\
+\operatorname{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if}\quad\mathrm{det}(U)\mathrm{det}(V)=-1
 \end{array}\right.\tag{5}$$。
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Proof of Lemma: Define an objective function $F$ as $$F=\|A-R B\|^{2}+\operatorname{tr}\left(L\left(R^{T} R-I\right)\right)+g\{\operatorname{det}(R)-1\}\tag{6}$$where $g$ is a Lagrange multiplier and $L$ is a symmetric matrix of Lagrange multipliers. The second and third term of $F$ represent the conditions for $R$ to be an orthogonal and proper rotation matrix respectively. Partial differentiations of $F$ with respect to $R$, $t$, and $c$ lead to the following system of equations [5]$$\frac{\partial F}{\partial R}=-2 A B^{T}+2 R B B^{T}+2 R L+g R=0\tag{7}$$ $${\frac{\partial F}{\partial L}=R^{T} R-I=0\tag{8}}$$ $${\frac{\partial F}{\partial g}=\operatorname{det}(R)-1=0\tag{9}}$$ where we used $$\frac{\partial}{\partial R}\mathrm{det}(R)=\mathrm{adj}\left(R^{T}\right)=\mathrm{det}\left(R^{T}\right)\left(R^{T}\right)^{-1}=R\tag{10}$$ since $R$ is a ratation matrix ($adj(R^T)$) is an adjoint matrix of $R^T$. From (7),$$RL^{\prime}=AB^{T},\quad\mathrm{where}L^{\prime}=BB^{T}+L+\frac{1}{2}gI.\tag{11}$$ By transposing the both sides of (11), we obtain the following equation (note that $L^\prime$ is symmetric). $$L^{^{\prime}}R^{T}=BA^{T}\tag{12}$$ If we multiply each side of (11) with each side of (12), respectively (13) is obtained since $R^TR= I$.$$L^{\prime2}=BA^TAB^T=VD^2V^T\tag{13}$$ Obviously $L^{\prime}$ and $L^{\prime2}$ are commutative ($L^{\prime}L^{\prime2} = L^{\prime2}L^{\prime}$),hence both can be reduced to diagonal forms by the same orthogonal matrix [6].
+Thus we can write $$L^{\prime}= VDSV^T\tag{14}$$ where $S$ is $diag(s_i)$,$s_i= 1$ or -1。<br> Now ,from (14),$$\begin{aligned}
+\operatorname*{det}(L^{\prime}) & =\mathrm{det}\left(VDSV^{T}\right) \\
+ & =\mathrm{det}(V)\mathrm{det}(D)\mathrm{det}(S)\mathrm{det}\left(V^{T}\right) \\
+ & =\mathrm{det}(D)\mathrm{det}(S).
+\end{aligned}\tag{15}$$ On the other hand, from (11) $$\begin{aligned}
+\operatorname*{det}(L^{\prime}) & =\mathrm{det}\left(R^{T}AB^{T}\right) \\
+ & =\mathrm{det}\left(R^{T}\right)\mathrm{det}\left(AB^{T}\right) \\
+ & =\mathrm{det}\left(AB^{T}\right).
+\end{aligned}\tag{16}.$$ Thus,$$\mathrm{det}(D)\mathrm{det}(S)=\mathrm{det}\left(AB^T\right).\tag{17}$$ Since singular values are nonnegative, $det(D) = d_1 d_2 \cdots d_m \ge0$.
+Hence $det(S)$ must be equal to 1 when det （ABT）> 0, and -1 when $det（AB^T）< 0$,and -1 when $det（AB^T）< 0$.<br> Next, extremum values od $\left \| A-RB^2 \right \|$ is derived as follows: from (11) we have $$\begin{aligned}
+\|A-RB\|^{2} & =\left\|A\right\|^{2}+\left\|B\right\|^{2}-2\mathrm{tr}\left(AB^{T}R^{T}\right) \\
+ & =\left\|A\right\|^{2}+\left\|B\right\|^{2}-2\mathrm{tr}\left(R^{T}AB^{T}\right) \\
+ & =\left\|A\right\|^{2}+\left\|B\right\|^{2}-2\mathrm{tr}\left(L^{\prime}\right).
+\end{aligned}\tag{18}$$  Substituting (14) into (18), we have $$\begin{aligned}
+\|A-RB\|^{2} & =\left\|A\right\|^{2}+\left\|B\right\|^{2}-2\mathrm{tr}\left(VDSV^{T}\right) \\
+ & =\|A\|^{2}+\|B\|^{2}-2\mathrm{tr}(DS) \\
+ & =\|A\|^{2}+\|B\|^{2}-2(d_{1}s_{1}+d_{2}s_{2}+\cdots+d_{m}s_{m}).
+\end{aligned} \tag{19}$$ Thus, the minimum value of $\left \|  A-RB\right\|^2$ is obviously achieved when $s_1 = s_2 = \cdots s_{m-1}= 1$,$s_m=1$ if $det(AB^T) \ge 0$, and $s_i =s_2 =\cdots s_{m-1} = 1$, $s_m = -1$ if $det(AB^T) < 0$. This concludes the first half of the lemma.<br>Next, we determine a rotation matrix $R$ achieving the above minimum value. When  $\mathrm{rank}(AB^T) = m$, $L^\prime$ is nonsingular, thus it has ils inverse $L^{\prime-1}= (VDSV^T)^{-1} = VS^{-1}D^{-1}V^T = VD^{-1}SV^T$ (note that $S^{-1} = S$, $SD^{-1}= D^{-1}S$). Therefore, from (11) we have $$R=AB^TL^{\prime-1}=UDV^TVD^{-1}SV^T = USV^T\tag{20}$$ Finnally,when $\mathrm{rank}(AB^T)=m-1$,from (11),(14) $$ RVDSV^T=UDV^T\tag{21}$$ Multiplying $V$ by both sides of (21) from the right and using $DS=D$ ( since $d_{m}=0$ and $s_{1}={s_{2}}=\cdots s_{m-1}=1$) $$RVD=UD \tag{22}$$
+is obtained. If we define an orthogonal matrix $Q$ as follows:$$Q=U^{T}RV\tag{23}$$
+we have $$QD=D\tag{24}$$.
+Let the column vectors of  $Q$ be ${q}_{1}$,${q}_{2}$,$\cdots$,${q}_{m}$ $\left(Q=[{q}_{1},{q}_{2},\cdots,{q}_{m}]\right)$.The following equations are obtained by comparing both sides of (24).$$d_i{q}_i=d_i{e}_i\quad1\leq i\leq m-1 \tag{25}$$
+Hence,$${q}_{i}=e_{i}\quad1 \leq i \leq m-1 \tag{26}$$
+where $e_i$ is a unit vector which has 1 as an $i$th element.$$\begin{matrix}
+ \quad \quad \quad i\\
+e_i\:=\:\left(0,0,\cdots,1,\cdots,0\right)^T
+\end{matrix}\tag{27}$$
+The last column vector $q_{m}$  of $Q$ is an orthogonal to al other vectors 
+ $q_i(1\leq i\leq m-1)$ since $Q$ is an orthogonal matrix. Thus we have $$q_{m}=e_{m}\quad\mathrm{or}\quad q_{m}=-e_{m}.\tag{28}$$
+On the other hand,$$\begin{aligned}\mathrm{det}(Q)&=\mathrm{det}\Bigl(U^T\Bigr)\mathrm{det}(R)\mathrm{det}(V)\\&=\mathrm{det}(U)\mathrm{det}(V).\end{aligned}\tag{29}$$
+Thus, $\mathrm{det}(Q)=1$ if $\mathrm{det}(U)\mathrm{det}(V)=1$  and $\mathrm{det}(Q)=-1$ if $\mathrm{det}(U)\mathrm{det}(V)=-1$. Therefore we have $$\begin{array}{c}R=UQV^T\\=USV^T\end{array}\tag{30}$$ where $$S=\left\{\begin{array}{ll}I&\quad\text{if}\:\mathrm{det}(U)\mathrm{det}(V)=1\\\text{diag}(1,1,\cdots,1,-1)&\quad\text{if}\:\mathrm{det}(U)\mathrm{det}(V)=-1.\end{array}\right.\tag{31}$$
+$Q.E.D.$<br>
+We can derive the following theorem using this lemma.
