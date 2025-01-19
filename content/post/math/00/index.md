@@ -139,4 +139,31 @@ $$\begin{aligned}
 $Q.E.D.$<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;利用这个引理，我们可以得到下面的定理。
 
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*Theorem*: Let $X =\left\{x_1, x_2,\cdots,x_n \right\} $ and $Y = \left\{y_1,y_2,\cdots,y_n\right\}$ be corresponding point patterns in $m$-dimensional space. The minimum value $\varepsilon ^2$ of the mean squared error $$e^2(R,t,c)=\frac{1}{n}\sum_{i=1}^n\left\|y_i-(cR{x}_i+{t})\right\|^2 \tag{32}$$ of these two point patterns with respect to the similarity transformation parameters ($R$: rotation, $t$: translation, and $c$: scaling) is given as follows :
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*Theorem*: Let $X =\left\{x_1, x_2,\cdots,x_n \right\} $ and $Y = \left\{y_1,y_2,\cdots,y_n\right\}$ be corresponding point patterns in $m$-dimensional space. The minimum value $\varepsilon ^2$ of the mean squared error $$e^2(R,t,c)=\frac{1}{n}\sum_{i=1}^n\left\|y_i-(cR{x}_i+{t})\right\|^2 \tag{32}$$ of these two point patterns with respect to the similarity transformation parameters ($R$: rotation, $t$: translation, and $c$: scaling) is given as follows :$$\varepsilon^2=\sigma_y^2-\frac{\mathrm{tr}(DS)^2}{\sigma_x^2} \tag{33}$$ where $$\mu_{x}=\frac{1}{n}\sum_{i=1}^n x_i\tag{34}$$ $$ {\mu}_{y}=\frac{1}{n}\sum_{i=1}^n {y}_i\tag{35}$$ $$
+\sigma_x^2=\frac{1}{n}\sum_{i=1}^n\|x_i-\mu_x\|^2\tag{36}$$    $$\sigma_y^2=\frac{1}{n}\sum_{i=1}^n\left\|y_i-\mu_y\right\|^2\tag{37}$$     $$\Sigma_{xy}=\frac{1}  {n}\sum_{i=1}^n\left({y}_i-{\mu}_y\right)\left({x}_i-{\mu}_x\right)^T\tag{38}$$ and 
+let a singular value decomposition of $\sum{}_{xy}$ be $UDV^T$ ( $ D = \mathrm{diag}(d_i)\text{,} d_1 \ge d_2 \ge \cdots \ge d_m \ge 0$ ), and $$\left.S=\left\{
+\begin{array}
+{ll}I & \quad\mathrm{if~}\det(\Sigma_{xy})\geq0 \\
+\mathrm{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if~}\det(\Sigma_{xy})<0.
+\end{array}\right.\right. \tag{39}$$ $\sum{}_{xy}$ is a covariance matrix of $X$ and $Y$, $\mu_x$ and $\mu_y$ are mean vectors of $X$ and $Y$,and $\sigma_x$ and $\sigma_y$ are variances around the mean vectors of $X$ and $Y$,respectively.<br>
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When $\mathrm{rank}(\sum{}_{xy}) \ge m-1$, the optimum transformation paramters are determined uniquely as follows: $$R=USV^T\tag{40}$$  $$ t=\mu_y-cR\mu_x\tag{41}$$  $$c=\frac{1}{\sigma_x^2}\mathrm{tr}(DS)\tag{42}$$ where $S$ in (40) must be chosen as $$\left.S=\left\{
+\begin{array}
+{ll}I & \quad\mathrm{if~}\det(U)\mathrm{det}{(V)}=1\\
+\mathrm{diag}(1,1,\cdots,1,-1) & \quad\mathrm{if~}\det(U)\mathrm{det}{(V)}=-1.
+\end{array}\right.\right. \tag{43}$$
+when ($\mathrm{rank}(\sum{}_{xy})=m-1$).
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**定理：** 设 $X =\left\{x_1, x_2,\cdots,x_n \right\} $ 和 $Y = \left\{y_1,y_2,\cdots,y_n\right\}$ 为$m$维空间的对应点模式。两个点模式关于相似变换参数（$R$：旋转，$t$：平移，和 $c$：缩放）的均方误差值$$e^2(R,t,c)=\frac{1}{n}\sum_{i=1}^n\left\|y_i-(cR{x}_i+{t})\right\|^2 \tag{32}$$ 的最小值 $\varepsilon ^2$如下所示：$$\varepsilon^2=\sigma_y^2-\frac{\mathrm{tr}(DS)^2}{\sigma_x^2} \tag{33}$$ 其中 $$\mu_{x}=\frac{1}{n}\sum_{i=1}^n x_i\tag{34}$$ $$ {\mu}_{y}=\frac{1}{n}\sum_{i=1}^n {y}_i\tag{35}$$ $$
+\sigma_x^2=\frac{1}{n}\sum_{i=1}^n\|x_i-\mu_x\|^2\tag{36}$$    $$\sigma_y^2=\frac{1}{n}\sum_{i=1}^n\left\|y_i-\mu_y\right\|^2\tag{37}$$     $$\Sigma_{xy}=\frac{1}  {n}\sum_{i=1}^n\left({y}_i-{\mu}_y\right)\left({x}_i-{\mu}_x\right)^T\tag{38}$$ 设  $\sum{}_{xy}$ 的奇异值分解为
+ $UDV^T$ ( $ D = \mathrm{diag}(d_i)\text{,} d_1 \ge d_2 \ge \cdots \ge d_m \ge 0$ )， 且 $$\left.S=\left\{
+\begin{array}
+{ll}I & \quad\mathrm{如果~}\det(\Sigma_{xy})\geq0 \\
+\mathrm{diag}(1,1,\cdots,1,-1) & \quad\mathrm{如果~}\det(\Sigma_{xy})<0
+\end{array}\right.\right. \tag{39}$$ 。 $\sum{}_{xy}$是$X$和$Y$的协方差矩阵，$\mu_x$和$\mu_y$是$X$和$Y$的均值向量，$\sigma_x$和$\sigma_y$是$X$和$Y$均值向量周围的方差。
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;当$\mathrm{rank}(\sum{}_{xy}) \ge m-1$，最优的变换参数被唯一确定为如下：$$R=USV^T\tag{40}$$  $$ t=\mu_y-cR\mu_x\tag{41}$$  $$c=\frac{1}{\sigma_x^2}\mathrm{tr}(DS)\tag{42}$$ 其中当（$\mathrm{rank}(\sum{}_{xy})=m-1$）时，(40)中的$S$必须选为$$\left.S=\left\{
+\begin{array}
+{ll}I & \quad\mathrm{如果~}\det(U)\mathrm{det}{(V)}=1\\
+\mathrm{diag}(1,1,\cdots,1,-1) & \quad\mathrm{如果~}\det(U)\mathrm{det}{(V)}=-1
+\end{array}\right.\right. \tag{43}$$
+。
